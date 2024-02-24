@@ -29,6 +29,7 @@ export default function App() {
     handleCloseModal();
   };
 
+  console.log(selectedOptions);
 
   return (
     <>
