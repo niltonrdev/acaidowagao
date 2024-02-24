@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import HeaderLogo from './components/Header/HeaderLogo';
 import AcaiModal from './components/Body/Modal';
+import Footer from './components/Footer/Footer';
 import styled from 'styled-components';
 import acaiimg from './assets/açai.jpeg';
 
@@ -8,14 +9,18 @@ import acaiimg from './assets/açai.jpeg';
 export default function App() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedAcai, setSelectedAcai] = useState(null);
   const [selectedOptions, setSelectedOptions] = useState({
     creme: null,
     frutas: [],
     complementos: [],
     adicionais: [],
   });
-
-  const handleOpenModal = () => {
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [totalPedido, setTotalPedido] = useState(0);
+  
+  const handleOpenModal = (acaiType) => {
+    setSelectedAcai(acaiType);
     setIsModalOpen(true);
   };
 
@@ -29,6 +34,24 @@ export default function App() {
     handleCloseModal();
   };
 
+  const fecharPedido = () => {
+    // Aqui você pode adicionar a lógica para fechar o pedido, como navegar para a página de detalhes do cliente
+    // ou enviar os dados do pedido para a loja.
+    // Neste exemplo, apenas atualizaremos o total do pedido.
+    setTotalPedido(totalPedido + totalPrice);
+    setSelectedAcai(null);
+    setSelectedOptions({
+      creme: null,
+      frutas: [],
+      complementos: [],
+      adicionais: [],
+    });
+    setTotalPrice(0);
+  };
+
+  const updateTotalPrice = (price) => {
+    setTotalPrice(price);
+  };
   console.log(selectedOptions);
 
   return (
@@ -39,14 +62,14 @@ export default function App() {
 
       <Content>
         <AcaiOptionRow>
-          <AcaiOptionContainer onClick={handleOpenModal}>
+          <AcaiOptionContainer onClick={() => handleOpenModal('300ml')}>
             <AcaiInfo>
               <AcaiTitle>Açaí - 300 ml</AcaiTitle>
               <AcaiPrice>R$ 12,00</AcaiPrice>
             </AcaiInfo>
             <AcaiImage src={acaiimg} alt="Açaí imagem" />
           </AcaiOptionContainer>
-          <AcaiOptionContainer onClick={handleOpenModal}>
+          <AcaiOptionContainer onClick={() => handleOpenModal('400ml')}>
             <AcaiInfo>
               <AcaiTitle>Açaí - 400 ml</AcaiTitle>
               <AcaiPrice>R$ 14,00</AcaiPrice>
@@ -55,14 +78,14 @@ export default function App() {
           </AcaiOptionContainer>
         </AcaiOptionRow>
         <AcaiOptionRow>
-          <AcaiOptionContainer onClick={handleOpenModal}>
+          <AcaiOptionContainer onClick={() => handleOpenModal('500ml')}>
             <AcaiInfo>
               <AcaiTitle>Açaí - 500 ml</AcaiTitle>
               <AcaiPrice>R$ 16,00</AcaiPrice>
             </AcaiInfo>
             <AcaiImage src={acaiimg} alt="Açaí imagem" />
           </AcaiOptionContainer>
-          <AcaiOptionContainer onClick={handleOpenModal}>
+          <AcaiOptionContainer onClick={() => handleOpenModal('700ml')}>
             <AcaiInfo>
               <AcaiTitle>Açaí - 700 ml</AcaiTitle>
               <AcaiPrice>R$ 20,00</AcaiPrice>
@@ -71,7 +94,18 @@ export default function App() {
           </AcaiOptionContainer>
         </AcaiOptionRow>
       </Content>
-      <AcaiModal isOpen={isModalOpen} onClose={handleCloseModal} onSelectOptions={handleSelectOptions} />
+      <AcaiModal 
+      isOpen={isModalOpen} 
+      onClose={handleCloseModal} 
+      onSelectOptions={handleSelectOptions} 
+      selectedAcai={selectedAcai}
+      selectedOptions={selectedOptions}
+      setSelectedOptions={setSelectedOptions}
+      updateTotalPrice={updateTotalPrice}
+      totalPrice={totalPrice}
+      />
+  
+    <Footer totalPrice={totalPrice} fecharPedido={fecharPedido} />
     </>
   )
 }

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
-export default function AcaiModal({ isOpen, onClose, onSelectOptions }) {
+export default function AcaiModal({ isOpen, onClose, onSelectOptions, selectedAcai, selectedOptions, setSelectedOptions, updateTotalPrice, totalPrice}) {
   if (!isOpen) return null;
 
   const [selectedCreme, setSelectedCreme] = useState(null);
@@ -10,6 +10,40 @@ export default function AcaiModal({ isOpen, onClose, onSelectOptions }) {
   const [selectedAdicionais, setSelectedAdicionais] = useState([]);
 
   const adicionais = ['Creme de Avelã', 'Biscoito Oreo', 'Kit Kat'];
+ 
+
+  useEffect(() => {
+
+    const calculateTotalPrice = () => {
+      let basePrice = 0;
+
+      switch (selectedAcai) {
+        case '300ml':
+          basePrice = 12;
+          break;
+        case '400ml':
+          basePrice = 14;
+          break;
+        case '500ml':
+          basePrice = 16;
+          break;
+        case '700ml':
+          basePrice = 20;
+          break;    
+        default:
+          basePrice = 0;
+      }
+
+
+
+      const additionalPrice = selectedOptions.adicionais.length * 2;
+
+      const totalPrice = basePrice + additionalPrice;
+       updateTotalPrice(totalPrice);
+    };
+
+    calculateTotalPrice();
+  }, [selectedAcai, selectedOptions]);
 
   const handleToggleCreme = (creme) => {
     setSelectedCreme(selectedCreme === creme ? null : creme);
@@ -40,15 +74,16 @@ export default function AcaiModal({ isOpen, onClose, onSelectOptions }) {
   };
 
   const handleToggleAdicional = (adicional) => {
-    const index = selectedAdicionais.indexOf(adicional);
-    if (index !== -1) {
-      setSelectedAdicionais((prevAdicionais) => [
-        ...prevAdicionais.slice(0, index),
-        ...prevAdicionais.slice(index + 1),
-      ]);
-    } else {
-      setSelectedAdicionais((prevAdicionais) => [...prevAdicionais, adicional]);
-    }
+    const updatedAdicionais = selectedAdicionais.includes(adicional)
+      ? selectedAdicionais.filter(item => item !== adicional)
+      : [...selectedAdicionais, adicional];
+  
+    setSelectedAdicionais(updatedAdicionais);
+
+    setSelectedOptions(prevOptions => ({
+      ...prevOptions,
+      adicionais: updatedAdicionais,
+    }));
   };
 
   const handleConfirm = () => {
@@ -63,6 +98,7 @@ export default function AcaiModal({ isOpen, onClose, onSelectOptions }) {
   return (
     <ModalOverlay>
       <ModalContent>
+      {selectedAcai && <SelectedAcai>{`Açaí de ${selectedAcai}`}</SelectedAcai>}
         <h2>Escolha os extras para o seu açaí</h2>
 
         <ModalSection>
@@ -148,6 +184,7 @@ export default function AcaiModal({ isOpen, onClose, onSelectOptions }) {
 
         <ButtonContainer>
           <ConfirmButton onClick={handleConfirm}>Confirmar</ConfirmButton>
+          <p>{`Preço Total: R$ ${totalPrice.toFixed(2)}`}</p>
           <CloseButton onClick={onClose}>Fechar</CloseButton>
         </ButtonContainer>
       </ModalContent>
@@ -155,10 +192,15 @@ export default function AcaiModal({ isOpen, onClose, onSelectOptions }) {
   );
 }
 
+const SelectedAcai = styled.div`
+  font-weight: bold;
+  margin-bottom: 10px;
+`;
+
 const ButtonContainer = styled.div`
   display: flex;
   justify-content: space-between;
-  margin-top: 20px;
+  margin-top: 10px;
 `;
 
 const ConfirmButton = styled.button`
@@ -173,11 +215,11 @@ const ConfirmButton = styled.button`
 
 const ModalOverlay = styled.div`
   position: fixed;
-  top: 0;
+  top: 70px;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Fundo semi-transparente */
+  background-color: rgba(0, 0, 0, 0.5); 
   display: flex;
   justify-content: center;
   align-items: center;
@@ -187,7 +229,7 @@ const ModalContent = styled.div`
   background-color: #fff;
   padding: 20px;
   border-radius: 8px;
-  max-height: calc(100vh - 200px); 
+  max-height: calc(80vh - 90px); 
   overflow-y: auto;
 `;
 
