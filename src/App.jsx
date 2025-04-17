@@ -4,7 +4,7 @@ import AcaiModal from './components/Body/Modal';
 import Footer from './components/Footer/Footer';
 import styled from 'styled-components';
 import acaiimg from './assets/açai.jpeg';
-
+import { createGlobalStyle } from 'styled-components';
 
 export default function App() {
 
@@ -65,14 +65,14 @@ export default function App() {
           <AcaiOptionContainer onClick={() => handleOpenModal('300ml')}>
             <AcaiInfo>
               <AcaiTitle>Açaí - 300 ml</AcaiTitle>
-              <AcaiPrice>R$ 12,00</AcaiPrice>
+              <AcaiPrice>R$ 14,00</AcaiPrice>
             </AcaiInfo>
             <AcaiImage src={acaiimg} alt="Açaí imagem" />
           </AcaiOptionContainer>
           <AcaiOptionContainer onClick={() => handleOpenModal('400ml')}>
             <AcaiInfo>
               <AcaiTitle>Açaí - 400 ml</AcaiTitle>
-              <AcaiPrice>R$ 14,00</AcaiPrice>
+              <AcaiPrice>R$ 16,00</AcaiPrice>
             </AcaiInfo>
             <AcaiImage src={acaiimg} alt="Açaí imagem" />
           </AcaiOptionContainer>
@@ -81,18 +81,27 @@ export default function App() {
           <AcaiOptionContainer onClick={() => handleOpenModal('500ml')}>
             <AcaiInfo>
               <AcaiTitle>Açaí - 500 ml</AcaiTitle>
-              <AcaiPrice>R$ 16,00</AcaiPrice>
+              <AcaiPrice>R$ 18,00</AcaiPrice>
             </AcaiInfo>
             <AcaiImage src={acaiimg} alt="Açaí imagem" />
           </AcaiOptionContainer>
           <AcaiOptionContainer onClick={() => handleOpenModal('700ml')}>
             <AcaiInfo>
               <AcaiTitle>Açaí - 700 ml</AcaiTitle>
-              <AcaiPrice>R$ 20,00</AcaiPrice>
+              <AcaiPrice>R$ 23,00</AcaiPrice>
             </AcaiInfo>
             <AcaiImage src={acaiimg} alt="Açaí imagem" />
           </AcaiOptionContainer>
         </AcaiOptionRow>
+        <AcaiOptionRow>
+        <AcaiOptionContainer onClick={() => handleOpenModal('1L')}>
+          <AcaiInfo>
+            <AcaiTitle>Açaí - 1 Litro</AcaiTitle>
+            <AcaiPrice>R$ 40,00</AcaiPrice>
+          </AcaiInfo>
+          <AcaiImage src={acaiimg} alt="Açaí imagem" />
+        </AcaiOptionContainer>
+      </AcaiOptionRow>
       </Content>
       <AcaiModal 
       isOpen={isModalOpen} 
@@ -104,7 +113,7 @@ export default function App() {
       updateTotalPrice={updateTotalPrice}
       totalPrice={totalPrice}
       />
-  
+    <GlobalStyle />
     <Footer totalPrice={totalPrice} fecharPedido={fecharPedido} />
     </>
   )
@@ -174,5 +183,16 @@ const AcaiImage = styled.img`
   @media screen and (max-width: 768px) {
     margin-left: 0;
     margin-top: 20px; 
+  }
+`;
+
+const GlobalStyle = createGlobalStyle`
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+  
+  body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
   }
 `;

@@ -19,16 +19,19 @@ export default function AcaiModal({ isOpen, onClose, onSelectOptions, selectedAc
 
       switch (selectedAcai) {
         case '300ml':
-          basePrice = 12;
-          break;
-        case '400ml':
           basePrice = 14;
           break;
-        case '500ml':
+        case '400ml':
           basePrice = 16;
           break;
+        case '500ml':
+          basePrice = 18;
+          break;
         case '700ml':
-          basePrice = 20;
+          basePrice = 23;
+          break;  
+        case '1L':
+          basePrice = 40;
           break;    
         default:
           basePrice = 0;
@@ -36,7 +39,7 @@ export default function AcaiModal({ isOpen, onClose, onSelectOptions, selectedAc
 
 
 
-      const additionalPrice = selectedOptions.adicionais.length * 2;
+      const additionalPrice = selectedOptions.adicionais.length * 4;
 
       const totalPrice = basePrice + additionalPrice;
        updateTotalPrice(totalPrice);
@@ -175,7 +178,7 @@ export default function AcaiModal({ isOpen, onClose, onSelectOptions, selectedAc
           <SubtitleGray>Escolha quantos quiser</SubtitleGray>
           {adicionais.map((adicional) => (
             <OptionItem key={adicional} selected={selectedAdicionais.includes(adicional)} onClick={() => handleToggleAdicional(adicional)}>
-              {adicional} (+R$2,00)
+              {adicional} (+R$4,00)
               <PlusButton>{selectedAdicionais.includes(adicional) ? '-' : '+'}</PlusButton>
             </OptionItem>
           ))}
@@ -204,12 +207,20 @@ const ButtonContainer = styled.div`
 `;
 
 const ConfirmButton = styled.button`
-  background-color: green;
+  background: linear-gradient(to right, #6A3093, #8E44AD);
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
+  padding: 12px 25px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(106, 48, 147, 0.4);
+  }
 `;
 
 
@@ -227,10 +238,13 @@ const ModalOverlay = styled.div`
 
 const ModalContent = styled.div`
   background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  max-height: calc(80vh - 90px); 
+  padding: 25px;
+  border-radius: 15px;
+  max-height: calc(80vh - 90px);
   overflow-y: auto;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 `;
 
 const ModalSection = styled.div`
@@ -255,12 +269,21 @@ const OptionsContainer = styled.div`
 `;
 
 const OptionItem = styled.div`
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    margin-bottom: 10px;
-    color: ${({ selected }) => (selected ? 'green' : 'black')};
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 12px;
+  padding: 12px 15px;
+  border-radius: 8px;
+  background-color: ${({ selected }) => (selected ? '#F0E6FF' : '#f9f9f9')};
+  color: ${({ selected }) => (selected ? '#6A3093' : '#333')};
+  font-weight: ${({ selected }) => (selected ? '500' : '400')};
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: ${({ selected }) => (selected ? '#E2D0FF' : '#f0f0f0')};
+  }
 `;
 
 const PlusButton = styled.div`
