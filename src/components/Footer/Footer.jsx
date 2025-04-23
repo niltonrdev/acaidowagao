@@ -1,14 +1,17 @@
 import React from 'react';
 import styled from 'styled-components';
 
-export default function Footer({ totalPrice, fecharPedido }) {
+export default function Footer({ totalPrice, fecharPedido, disabled }) {
   return (
     <FooterContainer>
     <TotalContainer>
       <TotalText>Total do Pedido:</TotalText>
       <TotalValue>R$ {totalPrice.toFixed(2)}</TotalValue>
     </TotalContainer>
-    <CheckoutButton onClick={fecharPedido}>
+    <CheckoutButton 
+        onClick={fecharPedido}
+        disabled={disabled}
+      >
       Fechar Pedido
       <ArrowIcon>→</ArrowIcon>
     </CheckoutButton>
@@ -55,15 +58,16 @@ const CheckoutButton = styled.button`
   border-radius: 30px;
   font-weight: 600;
   font-size: 1rem;
-  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 10px;
   transition: all 0.3s ease;
-  
+  opacity: ${({ disabled }) => disabled ? 0.6 : 1};
+  cursor: ${({ disabled }) => disabled ? 'not-allowed' : 'pointer'};
+    
   &:hover {
-    background: #8E44AD;
-    transform: translateY(-2px);
+    background: ${({ disabled }) => disabled ? '#6A3093' : '#8E44AD'};
+    transform: ${({ disabled }) => disabled ? 'none' : 'translateY(-2px)'};
   }
 `;
 

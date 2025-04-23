@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import HeaderLogo from './components/Header/HeaderLogo';
 import AcaiModal from './components/Body/Modal';
 import Footer from './components/Footer/Footer';
+import CheckoutForm from './components/Checkout/CheckoutForm';
 import styled from 'styled-components';
 import acaiimg from './assets/açai.jpeg';
 import { createGlobalStyle } from 'styled-components';
@@ -9,6 +10,7 @@ import { createGlobalStyle } from 'styled-components';
 export default function App() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [selectedAcai, setSelectedAcai] = useState(null);
   const [selectedOptions, setSelectedOptions] = useState({
     creme: null,
@@ -18,6 +20,7 @@ export default function App() {
   });
   const [totalPrice, setTotalPrice] = useState(0);
   const [totalPedido, setTotalPedido] = useState(0);
+  const [pedido, setPedido] = useState(null);
   
   const handleOpenModal = (acaiType) => {
     setSelectedAcai(acaiType);
@@ -32,6 +35,16 @@ export default function App() {
   const handleSelectOptions = (options) => {
     setSelectedOptions(options);
     handleCloseModal();
+  };
+  const handleFecharPedido = () => {
+    setPedido({
+      tamanho: selectedAcai,
+      ...selectedOptions
+    });
+    setIsCheckoutOpen(true);
+  };
+  const handleBackFromCheckout = () => {
+    setIsCheckoutOpen(false);
   };
 
   const fecharPedido = () => {
@@ -48,7 +61,49 @@ export default function App() {
     });
     setTotalPrice(0);
   };
+const handleConfirmCheckout = (cliente) => {
+    // Formatando a mensagem para o WhatsApp
+    const mensagem = formatWhatsAppMessage(pedido, cliente, totalPrice);
+    const whatsappUrl = `https://wa.me/55SEUNUMERO?text=${encodeURIComponent(mensagem)}`;
+    
+    // Abre o WhatsApp em uma nova aba
+    window.open(whatsappUrl, '_blank');
+    
+    // Reseta o pedido
+    resetPedido();
+  };
 
+  const formatWhatsAppMessage = (pedido, cliente, total) => {
+    let message = `🍇 *NOVO PEDIDO - AÇAÍ DO WAGÃO* 🍇\n\n`;
+    message += `*Cliente:* ${cliente.nome}\n`;
+    message += `*Telefone:* ${cliente.telefone}\n`;
+    message += `*Endereço:* ${cliente.endereco}\n`;
+    if (cliente.observacao) message += `*Observações:* ${cliente.observacao}\n\n`;
+    
+    message += `*Pedido:*\n`;
+    message += `- Açaí ${pedido.tamanho}\n`;
+    if (pedido.creme) message += `- Creme: ${pedido.creme}\n`;
+    if (pedido.frutas.length > 0) message += `- Frutas: ${pedido.frutas.join(', ')}\n`;
+    if (pedido.complementos.length > 0) message += `- Complementos: ${pedido.complementos.join(', ')}\n`;
+    if (pedido.adicionais.length > 0) message += `- Adicionais: ${pedido.adicionais.join(', ')}\n\n`;
+    
+    message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
+    message += `🕒 *Tempo de preparo: 20-30 minutos*`;
+    
+    return message;
+  };
+
+  const resetPedido = () => {
+    setSelectedAcai(null);
+    setSelectedOptions({
+      creme: null,
+      frutas: [],
+      complementos: [],
+      adicionais: [],
+    });
+    setTotalPrice(0);
+    setIsCheckoutOpen(false);
+  };
   const updateTotalPrice = (price) => {
     setTotalPrice(price);
   };
@@ -104,15 +159,30 @@ export default function App() {
       </AcaiOptionRow>
       </Content>
       <AcaiModal 
-      isOpen={isModalOpen} 
-      onClose={handleCloseModal} 
-      onSelectOptions={handleSelectOptions} 
-      selectedAcai={selectedAcai}
-      selectedOptions={selectedOptions}
-      setSelectedOptions={setSelectedOptions}
-      updateTotalPrice={updateTotalPrice}
-      totalPrice={totalPrice}
+        isOpen={isModalOpen} 
+        onClose={handleCloseModal} 
+        onSelectOptions={handleSelectOptions} 
+        selectedAcai={selectedAcai}
+        selectedOptions={selectedOptions}
+        setSelectedOptions={setSelectedOptions}
+        updateTotalPrice={updateTotalPrice}
+        totalPrice={totalPrice}
       />
+      {isCheckoutOpen && (
+        <CheckoutForm 
+          pedido={pedido}
+          totalPrice={totalPrice}
+          onConfirm={handleConfirmCheckout}
+          onBack={handleBackFromCheckout}
+        />
+      )}
+      {!isCheckoutOpen && (
+        <Footer 
+          totalPrice={totalPrice} 
+          fecharPedido={handleFecharPedido} 
+          disabled={!selectedAcai}
+        />
+      )}
     <GlobalStyle />
     <Footer totalPrice={totalPrice} fecharPedido={fecharPedido} />
     </>
