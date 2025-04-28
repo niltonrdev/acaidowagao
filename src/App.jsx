@@ -54,7 +54,7 @@ export default function App() {
 const handleConfirmCheckout = (cliente) => {
     // Formatando a mensagem para o WhatsApp
     const mensagem = formatWhatsAppMessage(pedido, cliente, totalPrice);
-    const whatsappUrl = `https://wa.me/5561990449570?text=${encodeURIComponent(mensagem)}`;
+    const whatsappUrl = `https://wa.me/5561990449507?text=${encodeURIComponent(mensagem)}`;
     
     // Abre o WhatsApp em uma nova aba
     window.open(whatsappUrl, '_blank');
