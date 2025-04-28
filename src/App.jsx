@@ -36,35 +36,25 @@ export default function App() {
     setSelectedOptions(options);
     handleCloseModal();
   };
+
   const handleFecharPedido = () => {
+    if (!selectedAcai) return;
     setPedido({
       tamanho: selectedAcai,
       ...selectedOptions
     });
     setIsCheckoutOpen(true);
   };
+
   const handleBackFromCheckout = () => {
     setIsCheckoutOpen(false);
   };
 
-  const fecharPedido = () => {
-    // Aqui você pode adicionar a lógica para fechar o pedido, como navegar para a página de detalhes do cliente
-    // ou enviar os dados do pedido para a loja.
-    // Neste exemplo, apenas atualizaremos o total do pedido.
-    setTotalPedido(totalPedido + totalPrice);
-    setSelectedAcai(null);
-    setSelectedOptions({
-      creme: null,
-      frutas: [],
-      complementos: [],
-      adicionais: [],
-    });
-    setTotalPrice(0);
-  };
+
 const handleConfirmCheckout = (cliente) => {
     // Formatando a mensagem para o WhatsApp
     const mensagem = formatWhatsAppMessage(pedido, cliente, totalPrice);
-    const whatsappUrl = `https://wa.me/55SEUNUMERO?text=${encodeURIComponent(mensagem)}`;
+    const whatsappUrl = `https://wa.me/5561990449570?text=${encodeURIComponent(mensagem)}`;
     
     // Abre o WhatsApp em uma nova aba
     window.open(whatsappUrl, '_blank');
@@ -121,6 +111,7 @@ const handleConfirmCheckout = (cliente) => {
   }, [isModalOpen]);
   return (
     <>
+      <GlobalStyle />
       <HeaderContainer>
         <HeaderLogo />
       </HeaderContainer>
@@ -193,8 +184,7 @@ const handleConfirmCheckout = (cliente) => {
           disabled={!selectedAcai}
         />
       )}
-    <GlobalStyle />
-    <Footer totalPrice={totalPrice} fecharPedido={fecharPedido} />
+  
     </>
   )
 }
