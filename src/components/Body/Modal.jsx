@@ -229,17 +229,21 @@ const ModalOverlay = styled.div`
   top: 70px;
   left: 0;
   width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); 
+  height: calc(100% - 70px); // Ajuste para considerar o header
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start; // Alinhar ao topo
+  padding-top: 20px;
+  padding-bottom: 100px; // Espaço para o footer
+  overflow-y: auto;
+  z-index: 999;
 `;
 
 const ModalContent = styled.div`
   background-color: #fff;
-  padding: 25px;
-  border-radius: 15px;
+  padding: 20px;
+  border-radius: 8px;
   max-height: calc(80vh - 90px);
   overflow-y: auto;
   width: 90%;

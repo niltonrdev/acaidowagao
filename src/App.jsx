@@ -108,7 +108,17 @@ const handleConfirmCheckout = (cliente) => {
     setTotalPrice(price);
   };
   console.log(selectedOptions);
-
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [isModalOpen]);
   return (
     <>
       <HeaderContainer>
@@ -176,7 +186,7 @@ const handleConfirmCheckout = (cliente) => {
           onBack={handleBackFromCheckout}
         />
       )}
-      {!isCheckoutOpen && (
+      {!isModalOpen && !isCheckoutOpen && (
         <Footer 
           totalPrice={totalPrice} 
           fecharPedido={handleFecharPedido} 
@@ -264,5 +274,8 @@ const GlobalStyle = createGlobalStyle`
     margin: 0;
     padding: 0;
     background-color: #f5f5f5;
+    &.modal-open {
+      overflow: hidden;
+    }
   }
 `;
