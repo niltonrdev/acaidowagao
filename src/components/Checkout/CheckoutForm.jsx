@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 
 export default function CheckoutForm({ 
-  pedido, 
+  pedidos, 
   totalPrice, 
   onConfirm, 
   onBack 
@@ -30,18 +30,16 @@ export default function CheckoutForm({
         <h2>Finalizar Pedido</h2>
         
         <PedidoResumo>
-          <h3>Resumo do Pedido:</h3>
-          <p><strong>Açaí:</strong> {pedido.tamanho}</p>
-          {pedido.creme && <p><strong>Creme:</strong> {pedido.creme}</p>}
-          {pedido.frutas.length > 0 && (
-            <p><strong>Frutas:</strong> {pedido.frutas.join(', ')}</p>
-          )}
-          {pedido.complementos.length > 0 && (
-            <p><strong>Complementos:</strong> {pedido.complementos.join(', ')}</p>
-          )}
-          {pedido.adicionais.length > 0 && (
-            <p><strong>Adicionais:</strong> {pedido.adicionais.join(', ')}</p>
-          )}
+          <h3>Resumo dos Pedidos:</h3>
+          {pedidos.map((pedido, index) => (
+            <PedidoItem key={index}>
+              <p><strong>Açaí {pedido.tamanho}</strong> - R$ {pedido.preco.toFixed(2)}</p>
+              {pedido.creme && <p>• Creme: {pedido.creme}</p>}
+              {pedido.frutas.length > 0 && <p>• Frutas: {pedido.frutas.join(', ')}</p>}
+              {pedido.complementos.length > 0 && <p>• Complementos: {pedido.complementos.join(', ')}</p>}
+              {pedido.adicionais.length > 0 && <p>• Adicionais: {pedido.adicionais.join(', ')} (+R$ {pedido.adicionais.length * 4},00)</p>}
+            </PedidoItem>
+          ))}
           <Total>Total: R$ {totalPrice.toFixed(2)}</Total>
         </PedidoResumo>
 
@@ -219,4 +217,17 @@ const ConfirmButton = styled.button`
     transform: translateY(-2px);
     box-shadow: 0 5px 10px rgba(106, 48, 147, 0.3);
   }
+`;
+
+const PedidoItem = styled.div`
+    background: #f8f8f8;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border-left: 4px solid #6A3093;
+    
+    p {
+        margin: 5px 0;
+        font-size: 0.9rem;
+    }
 `;
