@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
+import html2canvas from 'html2canvas';
 
 export default function CheckoutForm({ 
   pedidos, 
@@ -13,15 +14,24 @@ export default function CheckoutForm({
     endereco: '',
     observacao: ''
   });
+const comprovanteRef = useRef();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setCliente(prev => ({ ...prev, [name]: value }));
   };
-
-  const handleSubmit = (e) => {
+  const gerarComprovante = async () => {
+    const canvas = await html2canvas(comprovanteRef.current, {
+      scale: 2, 
+      logging: false,
+      useCORS: true
+    });
+    return canvas.toDataURL('image/png');
+  };
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onConfirm(cliente);
+    const imageUrl = await gerarComprovante();
+    onConfirm({ ...cliente, imageUrl });
   };
 
   return (
@@ -29,20 +39,45 @@ export default function CheckoutForm({
       <CheckoutContent>
         <h2>Finalizar Pedido</h2>
         
-        <PedidoResumo>
-          <h3>Resumo dos Pedidos:</h3>
-          {pedidos.map((pedido, index) => (
-            <PedidoItem key={index}>
-              <p><strong>Açaí {pedido.tamanho}</strong> - R$ {pedido.preco.toFixed(2)}</p>
-              {pedido.creme && <p>• Creme: {pedido.creme}</p>}
-              {pedido.complementos.length > 0 && <p>• Complementos: {pedido.complementos.join(', ')}</p>}
-              {pedido.adicionais.length > 0 && <p>• Adicionais: {pedido.adicionais.join(', ')}</p>}
-              {pedido.frutas.length > 0 && <p>• Frutas: {pedido.frutas.join(', ')}</p>}
-              {pedido.caldas && <p>• Calda: {pedido.caldas}</p>}
-            </PedidoItem>
-          ))}
-          <Total>Total: R$ {totalPrice.toFixed(2)}</Total>
-        </PedidoResumo>
+ {/* Comprovante que será convertido em imagem */}
+      <Comprovante ref={comprovanteRef}>
+          <Header>
+            <h3>AÇAÍ DO WAGÃO</h3>
+            <p>Pedido: #{Math.floor(Math.random() * 1000)}</p>
+          </Header>
+          
+          <ClienteInfo>
+            <p><strong>Cliente:</strong> {cliente.nome}</p>
+            <p><strong>Telefone:</strong> {cliente.telefone}</p>
+            <p><strong>Endereço:</strong> {cliente.endereco}</p>
+            {cliente.observacao && <p><strong>Observações:</strong> {cliente.observacao}</p>}
+          </ClienteInfo>
+
+          <Itens>
+            <h4>ITENS:</h4>
+            {pedidos.map((pedido, index) => (
+              <Item key={index}>
+                <p><strong>{index + 1}. Açaí {pedido.tamanho}</strong></p>
+                {pedido.creme && <p>- Creme: {pedido.creme}</p>}
+                {pedido.complementos.length > 0 && <p>- Complementos: {pedido.complementos.join(', ')}</p>}
+                {pedido.adicionais.length > 0 && <p>- Adicionais: {pedido.adicionais.join(', ')}</p>}
+                {pedido.frutas.length > 0 && <p>- Frutas: {pedido.frutas.join(', ')}</p>}
+                {pedido.calda && <p>- Calda: {pedido.calda}</p>}
+                <p><strong>Valor:</strong> R$ {pedido.preco.toFixed(2)}</p>
+              </Item>
+            ))}
+          </Itens>
+
+          <Total>
+            <p><strong>TOTAL: R$ {totalPrice.toFixed(2)}</strong></p>
+          </Total>
+
+          <Footer>
+            <p>{new Date().toLocaleString('pt-BR')}</p>
+            <p>Obrigado pela preferência!</p>
+          </Footer>
+      </Comprovante>
+
 
         <Form onSubmit={handleSubmit}>
           <FormGroup>
@@ -131,12 +166,12 @@ const PedidoResumo = styled.div`
   margin-bottom: 20px;
 `;
 
-const Total = styled.p`
-  font-weight: bold;
-  font-size: 1.2rem;
-  margin-top: 10px;
-  color: #6A3093;
-`;
+// const Total = styled.p`
+//   font-weight: bold;
+//   font-size: 1.2rem;
+//   margin-top: 10px;
+//   color: #6A3093;
+// `;
 
 const Form = styled.form`
   display: flex;
@@ -231,4 +266,74 @@ const PedidoItem = styled.div`
         margin: 5px 0;
         font-size: 0.9rem;
     }
+`;
+
+const Comprovante = styled.div`
+  width: 100%;
+  max-width: 500px;
+  background: white;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  font-family: 'Courier New', monospace;
+`;
+
+const Header = styled.div`
+  text-align: center;
+  margin-bottom: 15px;
+  border-bottom: 2px dashed #ccc;
+  padding-bottom: 10px;
+
+  h3 {
+    color: #6A3093;
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  p {
+    margin: 5px 0 0;
+    font-size: 0.9rem;
+  }
+`;
+
+const ClienteInfo = styled.div`
+  margin-bottom: 15px;
+  p {
+    margin: 5px 0;
+  }
+`;
+
+const Itens = styled.div`
+  margin-bottom: 15px;
+
+  h4 {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+  }
+`;
+
+const Item = styled.div`
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px dotted #eee;
+
+  p {
+    margin: 3px 0;
+  }
+`;
+
+const Total = styled.div`
+  text-align: right;
+  font-size: 1.2rem;
+  margin: 15px 0;
+  padding-top: 10px;
+  border-top: 2px dashed #ccc;
+`;
+
+const Footer = styled.div`
+  text-align: center;
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 15px;
 `;

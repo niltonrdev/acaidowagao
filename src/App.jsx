@@ -73,53 +73,54 @@ export default function App() {
     };
 
 
-    const handleConfirmCheckout = (cliente) => {
-        let message = `🍇 *NOVO PEDIDO - AÇAÍ DO WAGÃO* 🍇\n\n`;
-        message += `*Cliente:* ${cliente.nome}\n`;
-        message += `*Telefone:* ${cliente.telefone}\n`;
-        message += `*Endereço:* ${cliente.endereco}\n`;
+    const handleConfirmCheckout = async ({ nome, telefone, endereco, observacao, imageUrl }) => {
+        // Mensagem básica para o WhatsApp
+        let message = `*NOVO PEDIDO - AÇAÍ DO WAGÃO*\n\n`;
+        message += `*Cliente:* ${nome}\n`;
+        message += `*Telefone:* ${telefone}\n`;
+        message += `*Endereço:* ${endereco}\n\n`;
+        message += `*Total: R$ ${totalPrice.toFixed(2)}*`;
         
-        if (cliente.observacao) message += `*Observações:* ${cliente.observacao}\n\n`;
-        
-        message += `*ITENS:*\n`;
-        pedidos.forEach((pedido, index) => {
-          message += `\n*Item ${index + 1}:* Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
-          if (pedido.creme) message += `• Creme: ${pedido.creme}\n`;
-          if (pedido.complementos.length > 0) message += `• Complementos: ${pedido.complementos.join(', ')}\n`;
-          if (pedido.adicionais.length > 0) message += `• Adicionais: ${pedido.adicionais.join(', ')}\n`;
-          if (pedido.frutas.length > 0) message += `• Frutas: ${pedido.frutas.join(', ')}\n`;
-          if (pedido.caldas) message += `• Calda: ${pedido.caldas}\n`;
-        });
-        
-        message += `\n*TOTAL: R$ ${totalPrice.toFixed(2)}*\n`;
-        message += `🕒 *Tempo de preparo: 20-30 minutos*`;
-        
+        // Abre o WhatsApp com a mensagem
         const whatsappUrl = `https://wa.me/5561990449507?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
+        const newWindow = window.open(whatsappUrl, '_blank');
+        
+        // Se gerou a imagem, abre em nova aba para impressão
+        if (imageUrl) {
+          setTimeout(() => {
+            const imgWindow = window.open('', '_blank');
+            imgWindow.document.write(`
+              <html>
+                <head>
+                  <title>Comprovante Açaí do Wagão</title>
+                  <style>
+                    body { text-align: center; padding: 20px; }
+                    img { max-width: 100%; height: auto; }
+                    button { 
+                      padding: 10px 20px; 
+                      background: #6A3093; 
+                      color: white; 
+                      border: none; 
+                      border-radius: 5px; 
+                      margin: 20px; 
+                      cursor: pointer;
+                    }
+                  </style>
+                </head>
+                <body>
+                  <img src="${imageUrl}" alt="Comprovante de Pedido">
+                  <br>
+                  <button onclick="window.print()">Imprimir Comprovante</button>
+                </body>
+              </html>
+            `);
+          }, 1000);
+        }
         
         // Reseta após enviar
         resetPedido();
       };
 
-    // const formatWhatsAppMessage = (pedido, cliente, total) => {
-    //     let message = `🍇 *NOVO PEDIDO - AÇAÍ DO WAGÃO* 🍇\n\n`;
-    //     message += `*Cliente:* ${cliente.nome}\n`;
-    //     message += `*Telefone:* ${cliente.telefone}\n`;
-    //     message += `*Endereço:* ${cliente.endereco}\n`;
-    //     if (cliente.observacao) message += `*Observações:* ${cliente.observacao}\n\n`;
-
-    //     message += `*Pedido:*\n`;
-    //     message += `- Açaí ${pedido.tamanho}\n`;
-    //     if (pedido.creme) message += `- Creme: ${pedido.creme}\n`;
-    //     if (pedido.frutas.length > 0) message += `- Frutas: ${pedido.frutas.join(', ')}\n`;
-    //     if (pedido.complementos.length > 0) message += `- Complementos: ${pedido.complementos.join(', ')}\n`;
-    //     if (pedido.adicionais.length > 0) message += `- Adicionais: ${pedido.adicionais.join(', ')}\n\n`;
-
-    //     message += `*Total: R$ ${total.toFixed(2)}*\n\n`;
-    //     message += `🕒 *Tempo de preparo: 20-30 minutos*`;
-
-    //     return message;
-    // };
 
     const resetPedido = () => {
         setSelectedAcai(null);
