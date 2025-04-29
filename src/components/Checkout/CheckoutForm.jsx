@@ -35,9 +35,10 @@ export default function CheckoutForm({
             <PedidoItem key={index}>
               <p><strong>Açaí {pedido.tamanho}</strong> - R$ {pedido.preco.toFixed(2)}</p>
               {pedido.creme && <p>• Creme: {pedido.creme}</p>}
-              {pedido.frutas.length > 0 && <p>• Frutas: {pedido.frutas.join(', ')}</p>}
               {pedido.complementos.length > 0 && <p>• Complementos: {pedido.complementos.join(', ')}</p>}
-              {pedido.adicionais.length > 0 && <p>• Adicionais: {pedido.adicionais.join(', ')} (+R$ {pedido.adicionais.length * 4},00)</p>}
+              {pedido.adicionais.length > 0 && <p>• Adicionais: {pedido.adicionais.join(', ')}</p>}
+              {pedido.frutas.length > 0 && <p>• Frutas: {pedido.frutas.join(', ')}</p>}
+              {pedido.caldas && <p>• Calda: {pedido.caldas}</p>}
             </PedidoItem>
           ))}
           <Total>Total: R$ {totalPrice.toFixed(2)}</Total>

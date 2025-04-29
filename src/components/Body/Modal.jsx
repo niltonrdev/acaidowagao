@@ -8,6 +8,7 @@ export default function AcaiModal({ isOpen, onClose, onSelectOptions, selectedAc
   const [selectedFrutas, setSelectedFrutas] = useState([]);
   const [selectedComplementos, setSelectedComplementos] = useState([]);
   const [selectedAdicionais, setSelectedAdicionais] = useState([]);
+  const [selectedCaldas, setSelectedCaldas] = useState(null);
 
   const adicionais = ['Creme de Avelã', 'Biscoito Oreo', 'Kit Kat'];
  
@@ -86,6 +87,7 @@ export default function AcaiModal({ isOpen, onClose, onSelectOptions, selectedAc
     setSelectedOptions(prevOptions => ({
       ...prevOptions,
       adicionais: updatedAdicionais,
+      caldas: selectedCaldas
     }));
   };
 
@@ -95,6 +97,7 @@ export default function AcaiModal({ isOpen, onClose, onSelectOptions, selectedAc
       frutas: selectedFrutas,
       complementos: selectedComplementos,
       adicionais: selectedAdicionais,
+      caldas: selectedCaldas
     });
   };
 
@@ -161,14 +164,24 @@ export default function AcaiModal({ isOpen, onClose, onSelectOptions, selectedAc
             <OptionItem selected={selectedComplementos.includes('Confete')} onClick={() => handleToggleComplemento('Confete')}>
               Confete <PlusButton>{selectedComplementos.includes('Confete') ? '-' : '+'}</PlusButton>
             </OptionItem>
-            <OptionItem selected={selectedComplementos.includes('Sucrilhos')} onClick={() => handleToggleComplemento('Sucrilhos')}>
-              Sucrilhos <PlusButton>{selectedComplementos.includes('Sucrilhos') ? '-' : '+'}</PlusButton>
+            <OptionItem selected={selectedComplementos.includes('Chocoball')} onClick={() => handleToggleComplemento('Chocoball')}>
+              Chocoball <PlusButton>{selectedComplementos.includes('Chocoball') ? '-' : '+'}</PlusButton>
             </OptionItem>
             <OptionItem selected={selectedComplementos.includes('Ovomaltine')} onClick={() => handleToggleComplemento('Ovomaltine')}>
               Ovomaltine <PlusButton>{selectedComplementos.includes('Ovomaltine') ? '-' : '+'}</PlusButton>
             </OptionItem>
-            <OptionItem selected={selectedComplementos.includes('Leite Condensado')} onClick={() => handleToggleComplemento('Leite Condensado')}>
-              Leite Condensado <PlusButton>{selectedComplementos.includes('Leite Condensado') ? '-' : '+'}</PlusButton>
+          </OptionsContainer>
+        </ModalSection>
+
+        <ModalSection>
+          <Subtitle>Caldas</Subtitle>
+          <SubtitleGray>Escolha até 1 opção</SubtitleGray>
+          <OptionsContainer>
+            <OptionItem selected={selectedCaldas === 'Leite Condensado'} onClick={() => setSelectedCaldas('Leite Condensado')}>
+              Leite Condensado <PlusButton>{selectedCaldas === 'Leite Condensado' ? '-' : '+'}</PlusButton>
+            </OptionItem>
+            <OptionItem selected={selectedCaldas === 'Mel'} onClick={() => setSelectedCaldas('Mel')}>
+              Mel <PlusButton>{selectedCaldas === 'Mel' ? '-' : '+'}</PlusButton>
             </OptionItem>
           </OptionsContainer>
         </ModalSection>
