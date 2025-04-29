@@ -72,7 +72,29 @@ export default function App() {
         setIsCheckoutOpen(false);
     };
 
-
+    React.useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const downloadTimestamp = params.get('download');
+        
+        if (downloadTimestamp) {
+          const imageUrl = localStorage.getItem(`comprovante-${downloadTimestamp}`);
+          if (imageUrl) {
+            const link = document.createElement('a');
+            link.href = imageUrl;
+            link.download = `comprovante-acai-${downloadTimestamp}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Limpa o localStorage após o download
+            localStorage.removeItem(`comprovante-${downloadTimestamp}`);
+            
+            // Remove o parâmetro da URL sem recarregar a página
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        }
+      }, []);
+      
     const handleConfirmCheckout = async ({ nome, telefone, endereco, observacao, imageUrl }) => {
         // Mensagem básica para o WhatsApp
         let message = `*NOVO PEDIDO - AÇAÍ DO WAGÃO*\n\n`;

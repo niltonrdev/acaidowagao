@@ -20,14 +20,53 @@ const comprovanteRef = useRef();
     const { name, value } = e.target;
     setCliente(prev => ({ ...prev, [name]: value }));
   };
-  const gerarComprovante = async () => {
+
+  const gerarEEnviarComprovante = async (e) => {
+    e.preventDefault();
+    
+    // Gera a imagem do comprovante
     const canvas = await html2canvas(comprovanteRef.current, {
-      scale: 2, 
+      scale: 2,
       logging: false,
       useCORS: true
     });
-    return canvas.toDataURL('image/png');
+    const imageUrl = canvas.toDataURL('image/png');
+    
+    // Cria um link temporário para download
+    const timestamp = new Date().getTime();
+    const fileName = `comprovante-acai-${timestamp}.png`;
+    
+    // Mensagem para o WhatsApp
+    let message = `*NOVO PEDIDO - AÇAÍ DO WAGÃO*\n\n`;
+    message += `*Cliente:* ${cliente.nome}\n`;
+    message += `*Telefone:* ${cliente.telefone}\n`;
+    message += `*Endereço:* ${cliente.endereco}\n`;
+    if (cliente.observacao) message += `*Observação:* ${cliente.observacao}\n`;
+    
+    message += `\n*ITENS DO PEDIDO:*\n`;
+    pedidos.forEach((pedido, index) => {
+      message += `\n${index + 1}. Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
+      if (pedido.creme) message += `   Creme: ${pedido.creme}\n`;
+      if (pedido.complementos.length > 0) message += `   Complementos: ${pedido.complementos.join(', ')}\n`;
+      if (pedido.adicionais.length > 0) message += `   Adicionais: ${pedido.adicionais.join(', ')}\n`;
+      if (pedido.frutas.length > 0) message += `   Frutas: ${pedido.frutas.join(', ')}\n`;
+      if (pedido.calda) message += `   Calda: ${pedido.calda}\n`;
+    });
+    
+    message += `\n*TOTAL: R$ ${totalPrice.toFixed(2)}*\n\n`;
+    message += `📎 *Comprovante para impressão:* ${window.location.href}?download=${timestamp}\n`;
+    message += `(Clique no link acima para baixar o comprovante completo)`;
+
+    // Abre o WhatsApp com a mensagem
+    window.open(`https://wa.me/5561990449507?text=${encodeURIComponent(message)}`, '_blank');
+    
+    // Prepara o download para quando o usuário clicar no link
+    localStorage.setItem(`comprovante-${timestamp}`, imageUrl);
+    
+    // Finaliza o processo
+    onConfirm(cliente);
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const imageUrl = await gerarComprovante();
@@ -40,98 +79,100 @@ const comprovanteRef = useRef();
         <h2>Finalizar Pedido</h2>
         
  {/* Comprovante que será convertido em imagem */}
-      <Comprovante ref={comprovanteRef}>
-          <Header>
-            <h3>AÇAÍ DO WAGÃO</h3>
-            <p>Pedido: #{Math.floor(Math.random() * 1000)}</p>
-          </Header>
-          
-          <ClienteInfo>
-            <p><strong>Cliente:</strong> {cliente.nome}</p>
-            <p><strong>Telefone:</strong> {cliente.telefone}</p>
-            <p><strong>Endereço:</strong> {cliente.endereco}</p>
-            {cliente.observacao && <p><strong>Observações:</strong> {cliente.observacao}</p>}
-          </ClienteInfo>
+      <div style={{ position: 'absolute', left: '-9999px' }}>
+            <Comprovante ref={comprovanteRef}>
+              <Header>
+                <h3>AÇAÍ DO WAGÃO</h3>
+                <p>Pedido: #{Math.floor(Math.random() * 1000)}</p>
+              </Header>
+              
+              <ClienteInfo>
+                <p><strong>Cliente:</strong> {cliente.nome}</p>
+                <p><strong>Telefone:</strong> {cliente.telefone}</p>
+                <p><strong>Endereço:</strong> {cliente.endereco}</p>
+                {cliente.observacao && <p><strong>Observações:</strong> {cliente.observacao}</p>}
+              </ClienteInfo>
 
-          <Itens>
-            <h4>ITENS:</h4>
-            {pedidos.map((pedido, index) => (
-              <Item key={index}>
-                <p><strong>{index + 1}. Açaí {pedido.tamanho}</strong></p>
-                {pedido.creme && <p>- Creme: {pedido.creme}</p>}
-                {pedido.complementos.length > 0 && <p>- Complementos: {pedido.complementos.join(', ')}</p>}
-                {pedido.adicionais.length > 0 && <p>- Adicionais: {pedido.adicionais.join(', ')}</p>}
-                {pedido.frutas.length > 0 && <p>- Frutas: {pedido.frutas.join(', ')}</p>}
-                {pedido.calda && <p>- Calda: {pedido.calda}</p>}
-                <p><strong>Valor:</strong> R$ {pedido.preco.toFixed(2)}</p>
-              </Item>
-            ))}
-          </Itens>
+              <Itens>
+                <h4>ITENS:</h4>
+                {pedidos.map((pedido, index) => (
+                  <Item key={index}>
+                    <p><strong>{index + 1}. Açaí {pedido.tamanho}</strong></p>
+                    {pedido.creme && <p>- Creme: {pedido.creme}</p>}
+                    {pedido.complementos.length > 0 && <p>- Complementos: {pedido.complementos.join(', ')}</p>}
+                    {pedido.adicionais.length > 0 && <p>- Adicionais: {pedido.adicionais.join(', ')}</p>}
+                    {pedido.frutas.length > 0 && <p>- Frutas: {pedido.frutas.join(', ')}</p>}
+                    {pedido.calda && <p>- Calda: {pedido.calda}</p>}
+                    <p><strong>Valor:</strong> R$ {pedido.preco.toFixed(2)}</p>
+                  </Item>
+                ))}
+              </Itens>
 
-          <Total>
-            <p><strong>TOTAL: R$ {totalPrice.toFixed(2)}</strong></p>
-          </Total>
+              <Total>
+                <p><strong>TOTAL: R$ {totalPrice.toFixed(2)}</strong></p>
+              </Total>
 
-          <Footer>
-            <p>{new Date().toLocaleString('pt-BR')}</p>
-            <p>Obrigado pela preferência!</p>
-          </Footer>
-      </Comprovante>
+              <Footer>
+                <p>{new Date().toLocaleString('pt-BR')}</p>
+                <p>Obrigado pela preferência!</p>
+              </Footer>
+            </Comprovante>
+          </div>
 
+          <Form onSubmit={gerarEEnviarComprovante}>
+            <FormGroup>
+              <label>Nome:</label>
+              <input
+                type="text"
+                name="nome"
+                value={cliente.nome}
+                onChange={handleChange}
+                required
+              />
+            </FormGroup>
+            
+            <FormGroup>
+              <label>Telefone:</label>
+              <input
+                type="tel"
+                name="telefone"
+                value={cliente.telefone}
+                onChange={handleChange}
+                required
+              />
+            </FormGroup>
+            
+            <FormGroup>
+              <label>Endereço:</label>
+              <input
+                type="text"
+                name="endereco"
+                value={cliente.endereco}
+                onChange={handleChange}
+                required
+              />
+            </FormGroup>
+            
+            <FormGroup>
+              <label>Observações:</label>
+              <textarea
+                name="observacao"
+                value={cliente.observacao}
+                onChange={handleChange}
+              />
+            </FormGroup>
 
-        <Form onSubmit={handleSubmit}>
-          <FormGroup>
-            <Label>Nome:</Label>
-            <Input 
-              type="text" 
-              name="nome" 
-              value={cliente.nome} 
-              onChange={handleChange} 
-              required 
-            />
-          </FormGroup>
-          
-          <FormGroup>
-            <Label>Telefone:</Label>
-            <Input 
-              type="tel" 
-              name="telefone" 
-              value={cliente.telefone} 
-              onChange={handleChange} 
-              required 
-              placeholder="(XX) XXXXX-XXXX"
-            />
-          </FormGroup>
-          
-          <FormGroup>
-            <Label>Endereço:</Label>
-            <Input 
-              type="text" 
-              name="endereco" 
-              value={cliente.endereco} 
-              onChange={handleChange} 
-              required 
-              placeholder="Rua, Número, Bairro"
-            />
-          </FormGroup>
-          
-          <FormGroup>
-            <Label>Observações:</Label>
-            <TextArea 
-              name="observacao" 
-              value={cliente.observacao} 
-              onChange={handleChange} 
-              placeholder="Ponto de referência, instruções especiais..."
-            />
-          </FormGroup>
-          
-          <ButtonGroup>
-            <BackButton type="button" onClick={onBack}>Voltar</BackButton>
-            <ConfirmButton type="submit">Enviar Pedido</ConfirmButton>
-          </ButtonGroup>
-        </Form>
-      </CheckoutContent>
-    </CheckoutOverlay>
+            <ButtonGroup>
+              <BackButton type="button" onClick={onBack}>
+                Voltar
+              </BackButton>
+              <ConfirmButton type="submit">
+                Enviar Pedido
+              </ConfirmButton>
+            </ButtonGroup>
+          </Form>
+        </CheckoutContent>
+      </CheckoutOverlay>
   );
 }
 
