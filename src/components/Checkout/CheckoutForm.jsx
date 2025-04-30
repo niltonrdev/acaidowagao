@@ -59,7 +59,8 @@ export default function CheckoutForm({
     const timestamp = new Date().getTime();
     localStorage.setItem(`comprovante-${timestamp}`, imageUrl);
     message += `📎 Comprovante para impressão: ${window.location.href}?download=${timestamp}`;
-    message += `\n\n⚠️ *ATENÇÃO:* Clique em ENVIAR no WhatsApp para finalizar seu pedido!\n\n`;
+   // message += `\n\n⚠️ *ATENÇÃO:* Clique em ENVIAR no WhatsApp para finalizar seu pedido!\n\n`;
+
     // Abre o WhatsApp
     window.open(`https://wa.me/5561990449507?text=${encodeURIComponent(message)}`, '_blank');
 
