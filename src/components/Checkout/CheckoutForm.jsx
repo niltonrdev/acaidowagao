@@ -58,7 +58,8 @@ export default function CheckoutForm({
         // Adiciona o link para download do comprovante
         const timestamp = new Date().getTime();
         localStorage.setItem(`comprovante-${timestamp}`, imageUrl);
-        message += `📎 Comprovante para impressão: ${window.location.href}?download=${timestamp}`;
+        const cleanUrl = window.location.origin + window.location.pathname;
+        message += `📎 Comprovante para impressão: ${cleanUrl}?download=${timestamp}`;
         message += `\n\n⚠️ *ATENÇÃO:* Clique em ENVIAR no WhatsApp para finalizar seu pedido!\n\n`;
 
         // Abertura otimizada para mobile
