@@ -33,41 +33,51 @@ export default function CheckoutForm({
   const handleSubmit = async (e) => {
     e.preventDefault();
     const imageUrl = await gerarComprovante();
-    
-    // Formata a mensagem para o WhatsApp como era antes
-    let message = `🍇 NOVO PEDIDO - AÇAÍ DO WAGÃO 🍇\n\n`;
-    message += `Cliente: ${cliente.nome}\n`;
-    message += `Telefone: ${cliente.telefone}\n`;
-    message += `Endereço: ${cliente.endereco}\n`;
-    if (cliente.observacao) message += `Observações: ${cliente.observacao}\n\n`;
-    
-    message += `ITENS:\n\n`;
-    pedidos.forEach((pedido, index) => {
-      message += `Item ${index + 1}: Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
-      if (pedido.creme) message += `* Creme: ${pedido.creme}\n`;
-      if (pedido.frutas.length > 0) message += `* Frutas: ${pedido.frutas.join(', ')}\n`;
-      if (pedido.complementos.length > 0) message += `* Complementos: ${pedido.complementos.join(', ')}\n`;
-      if (pedido.adicionais.length > 0) message += `* Adicionais: ${pedido.adicionais.join(', ')}\n`;
-      if (pedido.caldas) message += `* Calda: ${pedido.caldas}\n`;
-      message += `\n`;
-    });
-    
-    message += `TOTAL: R$ ${totalPrice.toFixed(2)}\n`;
-    message += `🕒 Tempo de preparo: 20-30 minutos\n\n`;
-    
-    // Adiciona o link para download do comprovante
-    const timestamp = new Date().getTime();
-    localStorage.setItem(`comprovante-${timestamp}`, imageUrl);
-    message += `📎 Comprovante para impressão: ${window.location.href}?download=${timestamp}`;
-   // message += `\n\n⚠️ *ATENÇÃO:* Clique em ENVIAR no WhatsApp para finalizar seu pedido!\n\n`;
+    try{
+            // Formata a mensagem para o WhatsApp como era antes
+        let message = `🍇 NOVO PEDIDO - AÇAÍ DO WAGÃO 🍇\n\n`;
+        message += `Cliente: ${cliente.nome}\n`;
+        message += `Telefone: ${cliente.telefone}\n`;
+        message += `Endereço: ${cliente.endereco}\n`;
+        if (cliente.observacao) message += `Observações: ${cliente.observacao}\n\n`;
+        
+        message += `ITENS:\n\n`;
+        pedidos.forEach((pedido, index) => {
+          message += `Item ${index + 1}: Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
+          if (pedido.creme) message += `* Creme: ${pedido.creme}\n`;
+          if (pedido.frutas.length > 0) message += `* Frutas: ${pedido.frutas.join(', ')}\n`;
+          if (pedido.complementos.length > 0) message += `* Complementos: ${pedido.complementos.join(', ')}\n`;
+          if (pedido.adicionais.length > 0) message += `* Adicionais: ${pedido.adicionais.join(', ')}\n`;
+          if (pedido.caldas) message += `* Calda: ${pedido.caldas}\n`;
+          message += `\n`;
+        });
+        
+        message += `TOTAL: R$ ${totalPrice.toFixed(2)}\n`;
+        message += `🕒 Tempo de preparo: 20-30 minutos\n\n`;
+        
+        // Adiciona o link para download do comprovante
+        const timestamp = new Date().getTime();
+        localStorage.setItem(`comprovante-${timestamp}`, imageUrl);
+        message += `📎 Comprovante para impressão: ${window.location.href}?download=${timestamp}`;
+      // message += `\n\n⚠️ *ATENÇÃO:* Clique em ENVIAR no WhatsApp para finalizar seu pedido!\n\n`;
 
-    // Abre o WhatsApp
-    window.open(`https://wa.me/5561990449507?text=${encodeURIComponent(message)}`, '_blank');
+        // Abertura otimizada para mobile
+        if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+          // Método para mobile
+          window.location.href = `https://wa.me/5561990449507?text=${encodeURIComponent(message)}`;
+        } else {
+          // Método para desktop
+          window.open(`https://wa.me/5561990449507?text=${encodeURIComponent(message)}`, '_blank');
+        }
+        // Finaliza o processo
+        setTimeout(() => {
+          onConfirm(cliente);
+        }, 1500);
+    }catch (error) {
+      console.error("Erro:", error);
+      alert("Ocorreu um erro. Por favor, tente novamente.");
+    }
 
-    
-    
-    // Finaliza o processo
-    onConfirm(cliente);
   };
 
   return (
