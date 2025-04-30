@@ -48,7 +48,7 @@ export default function CheckoutForm({
       if (pedido.frutas.length > 0) message += `* Frutas: ${pedido.frutas.join(', ')}\n`;
       if (pedido.complementos.length > 0) message += `* Complementos: ${pedido.complementos.join(', ')}\n`;
       if (pedido.adicionais.length > 0) message += `* Adicionais: ${pedido.adicionais.join(', ')}\n`;
-      if (pedido.calda) message += `* Calda: ${pedido.calda}\n`;
+      if (pedido.caldas) message += `* Calda: ${pedido.caldas}\n`;
       message += `\n`;
     });
     
@@ -59,9 +59,11 @@ export default function CheckoutForm({
     const timestamp = new Date().getTime();
     localStorage.setItem(`comprovante-${timestamp}`, imageUrl);
     message += `📎 Comprovante para impressão: ${window.location.href}?download=${timestamp}`;
-
+    message += `\n\n⚠️ *ATENÇÃO:* Clique em ENVIAR no WhatsApp para finalizar seu pedido!\n\n`;
     // Abre o WhatsApp
     window.open(`https://wa.me/5561990449507?text=${encodeURIComponent(message)}`, '_blank');
+
+    
     
     // Finaliza o processo
     onConfirm(cliente);
@@ -82,7 +84,7 @@ export default function CheckoutForm({
               {pedido.frutas.length > 0 && <p>Frutas: {pedido.frutas.join(', ')}</p>}
               {pedido.complementos.length > 0 && <p>Complementos: {pedido.complementos.join(', ')}</p>}
               {pedido.adicionais.length > 0 && <p>Adicionais: {pedido.adicionais.join(', ')}</p>}
-              {pedido.calda && <p>Calda: {pedido.calda}</p>}
+              {pedido.caldas && <p>Calda: {pedido.caldas}</p>}
             </PedidoItem>
           ))}
           <Total>Total: R$ {totalPrice.toFixed(2)}</Total>
@@ -169,7 +171,7 @@ export default function CheckoutForm({
                   {pedido.complementos.length > 0 && <p>- Complementos: {pedido.complementos.join(', ')}</p>}
                   {pedido.adicionais.length > 0 && <p>- Adicionais: {pedido.adicionais.join(', ')}</p>}
                   {pedido.frutas.length > 0 && <p>- Frutas: {pedido.frutas.join(', ')}</p>}
-                  {pedido.calda && <p>- Calda: {pedido.calda}</p>}
+                  {pedido.caldas && <p>- Calda: {pedido.caldas}</p>}
                   <p><strong>Valor:</strong> R$ {pedido.preco.toFixed(2)}</p>
                 </Item>
               ))}
