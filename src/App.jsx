@@ -268,28 +268,33 @@ const AcaiOptionRow = styled.div`
   justify-content: space-between;
   flex-wrap: wrap;
   margin-bottom: 20px;
-  padding: 50px;
+  padding: 20px; /* Reduzi o padding geral */
 
   @media screen and (max-width: 768px) {
     flex-direction: column;
     align-items: center;
-    padding: 10px 5px;
+    padding: 15px; 
+    width: 100%; /* Garante uso total da largura */
+    box-sizing: border-box; 
   }
 `;
 
 const AcaiOptionContainer = styled.div`
-  background-color: #fff; 
-  border-radius: 10px; 
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
-  padding: 20px; 
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 15px;
   display: flex;
   align-items: center;
-  width: calc(50% - 60px);
-  margin-bottom: 20px;
+  width: calc(50% - 15px); /* Cards mais próximos no desktop */
+  margin-bottom: 15px;
+  box-sizing: border-box; /* Crucial para mobile */
 
   @media screen and (max-width: 768px) {
-    width: 100%; 
-    margin-right: 0; 
+    width: 92%; /* O segredo está aqui! */
+    margin: 0 auto 15px; /* Centraliza com margem automática */
+    flex-direction: column;
+    padding: 15px;
   }
 `;
 
