@@ -273,7 +273,7 @@ const AcaiOptionRow = styled.div`
   @media screen and (max-width: 768px) {
     flex-direction: column;
     align-items: center;
-    padding: 5px;
+    padding: 10px 5px;
   }
 `;
 
