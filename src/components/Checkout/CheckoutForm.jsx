@@ -52,7 +52,7 @@ export default function CheckoutForm({
             message += `Telefone: ${cliente.telefone}\n`;
             message += `Endereço: ${cliente.endereco}\n`;
             message += `Forma de Pagamento: ${pagamento}\n`;
-            if (cliente.observacao) message += `📝 Observações: ${cliente.observacao}\n\n`;
+            if (cliente.observacao) message += `Observações: ${cliente.observacao}\n\n`;
             
             message += `🛒 ITENS:\n\n`;
             pedidos.forEach((pedido, index) => {
