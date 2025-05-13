@@ -14,6 +14,7 @@ export default function CheckoutForm({
     endereco: '',
     observacao: ''
   });
+  const [pagamento, setPagamento] = useState('');
   const [frete, setFrete] = useState(0);
   const [regiao, setRegiao] = useState('');
   const regioes = [
@@ -24,6 +25,7 @@ export default function CheckoutForm({
     { nome: "Vicente P. Rua 12,10,8,7,6,17,15", valor: 5 },
     { nome: "Vicente P. Rua 5,4,3", valor: 6 }
   ];
+  const formasPagamento = ["PIX", "Dinheiro", "Cartão de Crédito", "Cartão de Débito"];
   const comprovanteRef = useRef();
 
   const handleChange = (e) => {
@@ -49,6 +51,7 @@ export default function CheckoutForm({
             message += `Cliente: ${cliente.nome}\n`;
             message += `Telefone: ${cliente.telefone}\n`;
             message += `Endereço: ${cliente.endereco}\n`;
+            message += `Forma de Pagamento: ${pagamento}\n`;
             if (cliente.observacao) message += `📝 Observações: ${cliente.observacao}\n\n`;
             
             message += `🛒 ITENS:\n\n`;
@@ -77,10 +80,10 @@ export default function CheckoutForm({
         // Abertura otimizada para mobile
         if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
           // Método para mobile
-          window.location.href = `https://wa.me/5561990449507?text=${encodeURIComponent(message)}`;
+          window.location.href = `https://wa.me/5561991672740?text=${encodeURIComponent(message)}`;
         } else {
           // Método para desktop
-          window.open(`https://wa.me/5561990449507?text=${encodeURIComponent(message)}`, '_blank');
+          window.open(`https://wa.me/5561991672740?text=${encodeURIComponent(message)}`, '_blank');
         }
         // Finaliza o processo
         setTimeout(() => {
@@ -157,6 +160,7 @@ export default function CheckoutForm({
               placeholder="(XX) XXXXX-XXXX"
             />
           </FormGroup>
+
           <FormGroup>
             <Label>Região do endereço:</Label>
             <Select 
@@ -176,6 +180,7 @@ export default function CheckoutForm({
               ))}
             </Select>
           </FormGroup>
+
           <FormGroup>
             <Label>Endereço:</Label>
             <Input 
@@ -188,6 +193,22 @@ export default function CheckoutForm({
             />
           </FormGroup>
           
+          <FormGroup>
+            <Label>Forma de Pagamento:</Label>
+            <Select 
+              value={pagamento}
+              onChange={(e) => setPagamento(e.target.value)}
+              required
+            >
+              <option value="">Selecione...</option>
+              {formasPagamento.map((forma, index) => (
+                <option key={index} value={forma}>
+                  {forma}
+                </option>
+              ))}
+            </Select>
+          </FormGroup>
+
           <FormGroup>
             <Label>Observações:</Label>
             <TextArea 
@@ -221,6 +242,7 @@ export default function CheckoutForm({
               <p><strong>Telefone:</strong> {cliente.telefone}</p>
               <p><strong>Endereço:</strong> {cliente.endereco}</p>
               <p><strong>Região:</strong> {regiao} (Frete: R$ {frete.toFixed(2)})</p>
+              <p><strong>Forma de Pagamento:</strong> {pagamento}</p>
               {cliente.observacao && <p><strong>Observações:</strong> {cliente.observacao}</p>}
             </ClienteInfo>
 
