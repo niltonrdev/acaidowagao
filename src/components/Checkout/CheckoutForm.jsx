@@ -14,6 +14,16 @@ export default function CheckoutForm({
     endereco: '',
     observacao: ''
   });
+  const [frete, setFrete] = useState(0);
+  const [regiao, setRegiao] = useState('');
+  const regioes = [
+    { nome: "QNG, QND, CNG, CND", valor: 3 },
+    { nome: "QNE, QNH, QNF, QI", valor: 4 },
+    { nome: "QNJ, QNA, CNB, QNC, CNA, Avenida das Palmeiras, Taguatinga Centro", valor: 5 },
+    { nome: "QNL, M NORTE", valor: 6 },
+    { nome: "Vicente P. Rua 12,10,8,7,6,17,15", valor: 5 },
+    { nome: "Vicente P. Rua 5,4,3", valor: 6 }
+  ];
   const comprovanteRef = useRef();
 
   const handleChange = (e) => {
@@ -35,25 +45,28 @@ export default function CheckoutForm({
     const imageUrl = await gerarComprovante();
     try{
             // Formata a mensagem para o WhatsApp como era antes
-        let message = `🍇 NOVO PEDIDO - AÇAÍ DO WAGÃO 🍇\n\n`;
-        message += `Cliente: ${cliente.nome}\n`;
-        message += `Telefone: ${cliente.telefone}\n`;
-        message += `Endereço: ${cliente.endereco}\n`;
-        if (cliente.observacao) message += `Observações: ${cliente.observacao}\n\n`;
-        
-        message += `ITENS:\n\n`;
-        pedidos.forEach((pedido, index) => {
-          message += `Item ${index + 1}: Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
-          if (pedido.creme) message += `* Creme: ${pedido.creme}\n`;
-          if (pedido.frutas.length > 0) message += `* Frutas: ${pedido.frutas.join(', ')}\n`;
-          if (pedido.complementos.length > 0) message += `* Complementos: ${pedido.complementos.join(', ')}\n`;
-          if (pedido.adicionais.length > 0) message += `* Adicionais: ${pedido.adicionais.join(', ')}\n`;
-          if (pedido.caldas) message += `* Calda: ${pedido.caldas}\n`;
-          message += `\n`;
-        });
-        
-        message += `TOTAL: R$ ${totalPrice.toFixed(2)}\n`;
-        message += `🕒 Tempo de preparo: 20-30 minutos\n\n`;
+            let message = `🍇 NOVO PEDIDO - AÇAÍ DO WAGÃO 🍇\n\n`;
+            message += `👤 Cliente: ${cliente.nome}\n`;
+            message += `📞 Telefone: ${cliente.telefone}\n`;
+            message += `📍 Endereço: ${cliente.endereco}\n`;
+            message += `🏷️ Região: ${regiao}\n`; // Adiciona a região selecionada
+            if (cliente.observacao) message += `📝 Observações: ${cliente.observacao}\n\n`;
+            
+            message += `🛒 ITENS:\n\n`;
+            pedidos.forEach((pedido, index) => {
+              message += `🍧 Item ${index + 1}: Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
+              if (pedido.creme) message += `   ▪️ Creme: ${pedido.creme}\n`;
+              if (pedido.frutas.length > 0) message += `   ▪️ Frutas: ${pedido.frutas.join(', ')}\n`;
+              if (pedido.complementos.length > 0) message += `   ▪️ Complementos: ${pedido.complementos.join(', ')}\n`;
+              if (pedido.adicionais.length > 0) message += `   ▪️ Adicionais: ${pedido.adicionais.join(', ')}\n`;
+              if (pedido.caldas) message += `   ▪️ Calda: ${pedido.caldas}\n`;
+              message += `\n`;
+            });
+            
+            message += `💰 Subtotal: R$ ${totalPrice.toFixed(2)}\n`;
+            message += `🚚 Frete: R$ ${frete.toFixed(2)}\n`;
+            message += `💳 TOTAL A PAGAR: R$ ${(totalPrice + frete).toFixed(2)}\n\n`;
+            message += `⏱️ Tempo de preparo: 20-30 minutos\n\n`;
         
         // Adiciona o link para download do comprovante
         const timestamp = new Date().getTime();
@@ -99,7 +112,26 @@ export default function CheckoutForm({
               {pedido.caldas && <p>Calda: {pedido.caldas}</p>}
             </PedidoItem>
           ))}
-          <Total>Total: R$ {totalPrice.toFixed(2)}</Total>
+          <TotalContainer>
+              <TotalLine>
+                <span>Subtotal:</span>
+                <span>R$ {totalPrice.toFixed(2)}</span>
+              </TotalLine>
+              
+              {frete > 0 ? (
+                <TotalLine>
+                  <span>Frete:</span>
+                  <span>+ R$ {frete.toFixed(2)}</span>
+                </TotalLine>
+              ) : (
+                <FreteHint>*Adicionar endereço para cálculo de frete*</FreteHint>
+              )}
+              
+              <TotalLine className="grand-total">
+                <span>Total:</span>
+                <span>R$ {(totalPrice + frete).toFixed(2)}</span>
+              </TotalLine>
+            </TotalContainer>
         </PedidoResumo>
 
         {/* Formulário de dados do cliente */}
@@ -126,7 +158,25 @@ export default function CheckoutForm({
               placeholder="(XX) XXXXX-XXXX"
             />
           </FormGroup>
-          
+          <FormGroup>
+            <Label>Região do endereço:</Label>
+            <Select 
+              value={regiao}
+              onChange={(e) => {
+                const selected = regioes.find(r => r.nome === e.target.value);
+                setFrete(selected?.valor || 0);
+                setRegiao(e.target.value);
+              }}
+              required
+            >
+              <option value="">Selecione sua região</option>
+              {regioes.map((regiao, index) => (
+                <option key={index} value={regiao.nome}>
+                  {regiao.nome} - R$ {regiao.valor.toFixed(2)}
+                </option>
+              ))}
+            </Select>
+          </FormGroup>
           <FormGroup>
             <Label>Endereço:</Label>
             <Input 
@@ -171,6 +221,7 @@ export default function CheckoutForm({
               <p><strong>Cliente:</strong> {cliente.nome}</p>
               <p><strong>Telefone:</strong> {cliente.telefone}</p>
               <p><strong>Endereço:</strong> {cliente.endereco}</p>
+              <p><strong>Região:</strong> {regiao} (Frete: R$ {frete.toFixed(2)})</p>
               {cliente.observacao && <p><strong>Observações:</strong> {cliente.observacao}</p>}
             </ClienteInfo>
 
@@ -189,8 +240,11 @@ export default function CheckoutForm({
               ))}
             </Itens>
 
+            
             <Total>
-              <p><strong>TOTAL: R$ {totalPrice.toFixed(2)}</strong></p>
+              <p><strong>Subtotal:</strong> R$ {totalPrice.toFixed(2)}</p>
+              <p><strong>Frete:</strong> R$ {frete.toFixed(2)}</p>
+              <p><strong>TOTAL:</strong> R$ {(totalPrice + frete).toFixed(2)}</p>
             </Total>
 
             <Footer>
@@ -405,4 +459,38 @@ const Footer = styled.div`
   font-size: 0.8rem;
   color: #666;
   margin-top: 15px;
+`;
+const Select = styled.select`
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-top: 5px;
+`;
+
+const TotalContainer = styled.div`
+  margin-top: 15px;
+  border-top: 1px dashed #ccc;
+  padding-top: 10px;
+`;
+
+const TotalLine = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin: 5px 0;
+  
+  &.grand-total {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-top: 10px;
+  }
+`;
+
+const FreteHint = styled.p`
+  font-size: 0.8rem;
+  font-style: italic;
+  color: #666;
+  text-align: right;
+  margin: 5px 0;
 `;
