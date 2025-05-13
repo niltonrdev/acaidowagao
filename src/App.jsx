@@ -5,6 +5,10 @@ import Footer from './components/Footer/Footer';
 import CheckoutForm from './components/Checkout/CheckoutForm';
 import styled from 'styled-components';
 import acaiimg from './assets/açai.jpeg';
+import acaiimg2 from './assets/acai2.jpeg';
+import acaiimg3 from './assets/acai3.jpeg';
+import acaiimg4 from './assets/acai4.jpeg';
+import acaiimg5 from './assets/acai5.jpeg';
 import { createGlobalStyle } from 'styled-components';
 
 export default function App() {
@@ -98,14 +102,13 @@ export default function App() {
     const handleConfirmCheckout = async ({ nome, telefone, endereco, observacao, regiao, frete, imageUrl }) => {
         // Mensagem básica para o WhatsApp
         let message = `🍇 NOVO PEDIDO - AÇAÍ DO WAGÃO 🍇\n\n`;
-        message += `👤 Cliente: ${nome}\n`;
-        message += `📞 Telefone: ${telefone}\n`;
-        message += `📍 Endereço: ${endereco}\n`;
-        message += `🏷️ Região: ${regiao}\n`;
+        message += `Cliente: ${nome}\n`;
+        message += `Telefone: ${telefone}\n`;
+        message += `Endereço: ${endereco}\n`;
         if (observacao) message += `📝 Observações: ${observacao}\n\n`;
-        message += `🛒 ITENS:\n\n`;
+        message += `ITENS:\n\n`;
         pedidos.forEach((pedido, index) => {
-          message += `🍧 Item ${index + 1}: Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
+          message += `Item ${index + 1}: Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
           if (pedido.creme) message += `   ▪️ Creme: ${pedido.creme}\n`;
           if (pedido.frutas.length > 0) message += `   ▪️ Frutas: ${pedido.frutas.join(', ')}\n`;
           if (pedido.complementos.length > 0) message += `   ▪️ Complementos: ${pedido.complementos.join(', ')}\n`;
@@ -114,9 +117,9 @@ export default function App() {
           message += `\n`;
         });
         
-        message += `💰 Subtotal: R$ ${totalPrice.toFixed(2)}\n`;
-        message += `🚚 Frete: R$ ${frete.toFixed(2)}\n`;
-        message += `💳 TOTAL A PAGAR: R$ ${(totalPrice + frete).toFixed(2)}\n\n`;
+        message += `Subtotal: R$ ${totalPrice.toFixed(2)}\n`;
+        message += `Frete: R$ ${frete.toFixed(2)}\n`;
+        message += `TOTAL A PAGAR: R$ ${(totalPrice + frete).toFixed(2)}\n\n`;
         message += `⏱️ Tempo de preparo: 20-30 minutos\n\n`;
 
         // Abre o WhatsApp com a mensagem
@@ -201,14 +204,14 @@ export default function App() {
                             <AcaiTitle>Açaí - 300 ml</AcaiTitle>
                             <AcaiPrice>R$ 14,00</AcaiPrice>
                         </AcaiInfo>
-                        <AcaiImage src={acaiimg} alt="Açaí imagem" />
+                        <AcaiImage src={acaiimg3} alt="Açaí imagem" />
                     </AcaiOptionContainer>
                     <AcaiOptionContainer onClick={() => handleOpenModal('400ml')}>
                         <AcaiInfo>
                             <AcaiTitle>Açaí - 400 ml</AcaiTitle>
                             <AcaiPrice>R$ 16,00</AcaiPrice>
                         </AcaiInfo>
-                        <AcaiImage src={acaiimg} alt="Açaí imagem" />
+                        <AcaiImage src={acaiimg2} alt="Açaí imagem" />
                     </AcaiOptionContainer>
                 </AcaiOptionRow>
                 <AcaiOptionRow>
@@ -217,14 +220,14 @@ export default function App() {
                             <AcaiTitle>Açaí - 500 ml</AcaiTitle>
                             <AcaiPrice>R$ 18,00</AcaiPrice>
                         </AcaiInfo>
-                        <AcaiImage src={acaiimg} alt="Açaí imagem" />
+                        <AcaiImage src={acaiimg4} alt="Açaí imagem" />
                     </AcaiOptionContainer>
                     <AcaiOptionContainer onClick={() => handleOpenModal('700ml')}>
                         <AcaiInfo>
                             <AcaiTitle>Açaí - 700 ml</AcaiTitle>
                             <AcaiPrice>R$ 23,00</AcaiPrice>
                         </AcaiInfo>
-                        <AcaiImage src={acaiimg} alt="Açaí imagem" />
+                        <AcaiImage src={acaiimg5} alt="Açaí imagem" />
                     </AcaiOptionContainer>
                 </AcaiOptionRow>
                 <AcaiOptionRow>

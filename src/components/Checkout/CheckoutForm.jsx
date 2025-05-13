@@ -46,15 +46,14 @@ export default function CheckoutForm({
     try{
             // Formata a mensagem para o WhatsApp como era antes
             let message = `🍇 NOVO PEDIDO - AÇAÍ DO WAGÃO 🍇\n\n`;
-            message += `👤 Cliente: ${cliente.nome}\n`;
-            message += `📞 Telefone: ${cliente.telefone}\n`;
-            message += `📍 Endereço: ${cliente.endereco}\n`;
-            message += `🏷️ Região: ${regiao}\n`; // Adiciona a região selecionada
+            message += `Cliente: ${cliente.nome}\n`;
+            message += `Telefone: ${cliente.telefone}\n`;
+            message += `Endereço: ${cliente.endereco}\n`;
             if (cliente.observacao) message += `📝 Observações: ${cliente.observacao}\n\n`;
             
             message += `🛒 ITENS:\n\n`;
             pedidos.forEach((pedido, index) => {
-              message += `🍧 Item ${index + 1}: Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
+              message += `Item ${index + 1}: Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
               if (pedido.creme) message += `   ▪️ Creme: ${pedido.creme}\n`;
               if (pedido.frutas.length > 0) message += `   ▪️ Frutas: ${pedido.frutas.join(', ')}\n`;
               if (pedido.complementos.length > 0) message += `   ▪️ Complementos: ${pedido.complementos.join(', ')}\n`;
@@ -63,9 +62,9 @@ export default function CheckoutForm({
               message += `\n`;
             });
             
-            message += `💰 Subtotal: R$ ${totalPrice.toFixed(2)}\n`;
-            message += `🚚 Frete: R$ ${frete.toFixed(2)}\n`;
-            message += `💳 TOTAL A PAGAR: R$ ${(totalPrice + frete).toFixed(2)}\n\n`;
+            message += `Subtotal: R$ ${totalPrice.toFixed(2)}\n`;
+            message += `Frete: R$ ${frete.toFixed(2)}\n`;
+            message += `TOTAL A PAGAR: R$ ${(totalPrice + frete).toFixed(2)}\n\n`;
             message += `⏱️ Tempo de preparo: 20-30 minutos\n\n`;
         
         // Adiciona o link para download do comprovante
