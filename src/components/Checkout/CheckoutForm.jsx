@@ -79,11 +79,11 @@ export default function CheckoutForm({
 
         // Abertura otimizada para mobile
         if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-          // Método para mobile
-          window.location.href = `https://wa.me/5561991672740?text=${encodeURIComponent(message)}`;
+          // Método para mobile 91672740
+          window.location.href = `https://wa.me/5561990449507?text=${encodeURIComponent(message)}`;
         } else {
           // Método para desktop
-          window.open(`https://wa.me/5561991672740?text=${encodeURIComponent(message)}`, '_blank');
+          window.open(`https://wa.me/5561990449507text=${encodeURIComponent(message)}`, '_blank');
         }
         // Finaliza o processo
         setTimeout(() => {

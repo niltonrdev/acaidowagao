@@ -9,6 +9,8 @@ import acaiimg2 from './assets/acai2.jpeg';
 import acaiimg3 from './assets/acai3.jpeg';
 import acaiimg4 from './assets/acai4.jpeg';
 import acaiimg5 from './assets/acai5.jpeg';
+import barca from './assets/barca.jpeg';
+import litro from './assets/litro.jpeg';
 import { createGlobalStyle } from 'styled-components';
 
 export default function App() {
@@ -61,6 +63,7 @@ export default function App() {
           '300ml': 14,
           '400ml': 16,
           '500ml': 18,
+          'Barca 550ml': 25,
           '700ml': 23,
           '1L': 40
         };
@@ -236,7 +239,14 @@ export default function App() {
                             <AcaiTitle>Açaí - 1 Litro</AcaiTitle>
                             <AcaiPrice>R$ 40,00</AcaiPrice>
                         </AcaiInfo>
-                        <AcaiImage src={acaiimg} alt="Açaí imagem" />
+                        <AcaiImage src={litro} alt="Açaí imagem" />
+                    </AcaiOptionContainer>
+                    <AcaiOptionContainer onClick={() => handleOpenModal('Barca 550ml')}>
+                      <AcaiInfo>
+                        <AcaiTitle>Barca 550ml</AcaiTitle>
+                        <AcaiPrice>R$ 25,00</AcaiPrice>
+                      </AcaiInfo>
+                      <AcaiImage src={barca} alt="Barca de açaí" />
                     </AcaiOptionContainer>
                 </AcaiOptionRow>
             </Content>

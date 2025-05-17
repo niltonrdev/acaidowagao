@@ -68,12 +68,14 @@ export default function AcaiModal({ isOpen, onClose, onSelectOptions, selectedAc
   };
 
   const handleToggleComplemento = (complemento) => {
-    setSelectedComplementos(prevComplementos => {
-      if (prevComplementos.includes(complemento)) {
-        return prevComplementos.filter(item => item !== complemento);
-      } else {
-        return [...prevComplementos, complemento];
+    setSelectedComplementos(prev => {
+      if (prev.includes(complemento)) {
+        return prev.filter(item => item !== complemento);
       }
+      if (selectedAcai === 'Barca 550ml' && prev.length >= 3) {
+        return prev;
+      }
+      return [...prev, complemento];
     });
   };
 
@@ -144,7 +146,11 @@ export default function AcaiModal({ isOpen, onClose, onSelectOptions, selectedAc
 
         <ModalSection>
           <Subtitle>Complementos</Subtitle>
-          <SubtitleGray>Escolha quantos quiser</SubtitleGray>
+          <SubtitleGray>
+            {selectedAcai === 'Barca 550ml' 
+              ? "Escolha até 3 opções" 
+              : "Escolha quantos quiser"}
+          </SubtitleGray>
           <OptionsContainer>
             <OptionItem selected={selectedComplementos.includes('Leite em pó')} onClick={() => handleToggleComplemento('Leite em pó')}>
               Leite em pó <PlusButton>{selectedComplementos.includes('Leite em pó') ? '-' : '+'}</PlusButton>
