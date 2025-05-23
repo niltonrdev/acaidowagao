@@ -3,6 +3,7 @@ import HeaderLogo from './components/Header/HeaderLogo';
 import AcaiModal from './components/Body/Modal';
 import Footer from './components/Footer/Footer';
 import CheckoutForm from './components/Checkout/CheckoutForm';
+import Download from './components/Download/Download';
 import styled from 'styled-components';
 import acaiimg from './assets/açai.jpeg';
 import acaiimg2 from './assets/acai2.jpeg';
@@ -28,7 +29,8 @@ export default function App() {
     const [totalPrice, setTotalPrice] = useState(0);
     const [totalPedido, setTotalPedido] = useState(0);
     const [pedidos, setPedidos] = useState([]);
-
+    const { pathname, search } = window.location;
+    const isDownloadPage = pathname === '/download' || search.includes('download=');
     const handleOpenModal = (acaiType) => {
         setSelectedAcai(acaiType);
         setIsModalOpen(true);
@@ -86,6 +88,7 @@ export default function App() {
         if (downloadTimestamp) {
           const imageUrl = localStorage.getItem(`comprovante-${downloadTimestamp}`);
           if (imageUrl) {
+            document.body.style.visibility = 'hidden';
             const link = document.createElement('a');
             link.href = imageUrl;
             link.download = `comprovante-acai-${downloadTimestamp}.png`;
@@ -98,70 +101,42 @@ export default function App() {
             
             // Remove o parâmetro da URL sem recarregar a página
             window.history.replaceState({}, document.title, window.location.pathname);
+            document.body.style.visibility = 'visible';
           }
         }
       }, []);
       
-    const handleConfirmCheckout = async ({ nome, telefone, endereco, observacao, regiao, frete, imageUrl }) => {
-        // Mensagem básica para o WhatsApp
-        let message = `🍇 NOVO PEDIDO - AÇAÍ DO WAGÃO 🍇\n\n`;
-        message += `Cliente: ${nome}\n`;
-        message += `Telefone: ${telefone}\n`;
-        message += `Endereço: ${endereco}\n`;
-        if (observacao) message += `📝 Observações: ${observacao}\n\n`;
-        message += `ITENS:\n\n`;
-        pedidos.forEach((pedido, index) => {
-          message += `Item ${index + 1}: Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
-          if (pedido.creme) message += `   ▪️ Creme: ${pedido.creme}\n`;
-          if (pedido.frutas.length > 0) message += `   ▪️ Frutas: ${pedido.frutas.join(', ')}\n`;
-          if (pedido.complementos.length > 0) message += `   ▪️ Complementos: ${pedido.complementos.join(', ')}\n`;
-          if (pedido.adicionais.length > 0) message += `   ▪️ Adicionais: ${pedido.adicionais.join(', ')}\n`;
-          if (pedido.caldas) message += `   ▪️ Calda: ${pedido.caldas}\n`;
-          message += `\n`;
-        });
-        
-        message += `Subtotal: R$ ${totalPrice.toFixed(2)}\n`;
-        message += `Frete: R$ ${frete.toFixed(2)}\n`;
-        message += `TOTAL A PAGAR: R$ ${(totalPrice + frete).toFixed(2)}\n\n`;
-        message += `⏱️ Tempo de preparo: 20-30 minutos\n\n`;
-
-        // Abre o WhatsApp com a mensagem
-        const whatsappUrl = `https://wa.me/5561990449507?text=${encodeURIComponent(message)}`;
-        const newWindow = window.open(whatsappUrl, '_blank');
-        
-        // Se gerou a imagem, abre em nova aba para impressão
+      const handleConfirmCheckout = async ({ nome, telefone, endereco, observacao, regiao, frete, imageUrl }) => {
+        // Abre a imagem em nova aba se existir
         if (imageUrl) {
-          setTimeout(() => {
-            const imgWindow = window.open('', '_blank');
-            imgWindow.document.write(`
-              <html>
-                <head>
-                  <title>Comprovante Açaí do Wagão</title>
-                  <style>
-                    body { text-align: center; padding: 20px; }
-                    img { max-width: 100%; height: auto; }
-                    button { 
-                      padding: 10px 20px; 
-                      background: #6A3093; 
-                      color: white; 
-                      border: none; 
-                      border-radius: 5px; 
-                      margin: 20px; 
-                      cursor: pointer;
-                    }
-                  </style>
-                </head>
-                <body>
-                  <img src="${imageUrl}" alt="Comprovante de Pedido">
-                  <br>
-                  <button onclick="window.print()">Imprimir Comprovante</button>
-                </body>
-              </html>
-            `);
-          }, 1000);
+          const imgWindow = window.open('', '_blank');
+          imgWindow.document.write(`
+            <html>
+              <head>
+                <title>Comprovante Açaí do Wagão</title>
+                <style>
+                  body { text-align: center; padding: 20px; }
+                  img { max-width: 100%; height: auto; }
+                  button { 
+                    padding: 10px 20px; 
+                    background: #6A3093; 
+                    color: white; 
+                    border: none; 
+                    border-radius: 5px; 
+                    margin: 20px; 
+                    cursor: pointer;
+                  }
+                </style>
+              </head>
+              <body>
+                <img src="${imageUrl}" alt="Comprovante de Pedido">
+                <br>
+                <button onclick="window.print()">Imprimir Comprovante</button>
+              </body>
+            </html>
+          `);
         }
         
-        // Reseta após enviar
         resetPedido();
       };
 
@@ -199,82 +174,87 @@ export default function App() {
             <HeaderContainer>
                 <HeaderLogo />
             </HeaderContainer>
-
-            <Content>
-                <AcaiOptionRow>
-                    <AcaiOptionContainer onClick={() => handleOpenModal('300ml')}>
-                        <AcaiInfo>
-                            <AcaiTitle>Açaí - 300 ml</AcaiTitle>
-                            <AcaiPrice>R$ 14,00</AcaiPrice>
-                        </AcaiInfo>
-                        <AcaiImage src={acaiimg3} alt="Açaí imagem" />
-                    </AcaiOptionContainer>
-                    <AcaiOptionContainer onClick={() => handleOpenModal('400ml')}>
-                        <AcaiInfo>
-                            <AcaiTitle>Açaí - 400 ml</AcaiTitle>
-                            <AcaiPrice>R$ 16,00</AcaiPrice>
-                        </AcaiInfo>
-                        <AcaiImage src={acaiimg2} alt="Açaí imagem" />
-                    </AcaiOptionContainer>
-                </AcaiOptionRow>
-                <AcaiOptionRow>
-                    <AcaiOptionContainer onClick={() => handleOpenModal('500ml')}>
-                        <AcaiInfo>
-                            <AcaiTitle>Açaí - 500 ml</AcaiTitle>
-                            <AcaiPrice>R$ 18,00</AcaiPrice>
-                        </AcaiInfo>
-                        <AcaiImage src={acaiimg4} alt="Açaí imagem" />
-                    </AcaiOptionContainer>
-                    <AcaiOptionContainer onClick={() => handleOpenModal('700ml')}>
-                        <AcaiInfo>
-                            <AcaiTitle>Açaí - 700 ml</AcaiTitle>
-                            <AcaiPrice>R$ 23,00</AcaiPrice>
-                        </AcaiInfo>
-                        <AcaiImage src={acaiimg5} alt="Açaí imagem" />
-                    </AcaiOptionContainer>
-                </AcaiOptionRow>
-                <AcaiOptionRow>
-                    <AcaiOptionContainer onClick={() => handleOpenModal('1L')}>
-                        <AcaiInfo>
-                            <AcaiTitle>Açaí - 1 Litro</AcaiTitle>
-                            <AcaiPrice>R$ 40,00</AcaiPrice>
-                        </AcaiInfo>
-                        <AcaiImage src={litro} alt="Açaí imagem" />
-                    </AcaiOptionContainer>
-                    <AcaiOptionContainer onClick={() => handleOpenModal('Barca 550ml')}>
+            {isDownloadPage ? (
+              <Download />
+            ) : (
+              <>
+              <Content>
+              <AcaiOptionRow>
+                  <AcaiOptionContainer onClick={() => handleOpenModal('300ml')}>
                       <AcaiInfo>
-                        <AcaiTitle>Barca 550ml</AcaiTitle>
-                        <AcaiPrice>R$ 25,00</AcaiPrice>
+                          <AcaiTitle>Açaí - 300 ml</AcaiTitle>
+                          <AcaiPrice>R$ 14,00</AcaiPrice>
                       </AcaiInfo>
-                      <AcaiImage src={barca} alt="Barca de açaí" />
-                    </AcaiOptionContainer>
-                </AcaiOptionRow>
-            </Content>
-            <AcaiModal
-                isOpen={isModalOpen}
-                onClose={handleCloseModal}
-                onSelectOptions={handleSelectOptions}
-                selectedAcai={selectedAcai}
-                selectedOptions={selectedOptions}
-                setSelectedOptions={setSelectedOptions}
-                updateTotalPrice={updateTotalPrice}
-                totalPrice={totalPrice}
-            />
-            {isCheckoutOpen && (
-                <CheckoutForm
-                    pedidos={pedidos}  
-                    totalPrice={totalPrice}
-                    onConfirm={handleConfirmCheckout}
-                    onBack={handleBackFromCheckout}
-                />
-            )}
-            {!isModalOpen && !isCheckoutOpen && (
-                <Footer
-                totalPrice={totalPrice}
-                fecharPedido={handleFecharPedido}
-                disabled={pedidos.length === 0}
-                />
-            )}
+                      <AcaiImage src={acaiimg3} alt="Açaí imagem" />
+                  </AcaiOptionContainer>
+                  <AcaiOptionContainer onClick={() => handleOpenModal('400ml')}>
+                      <AcaiInfo>
+                          <AcaiTitle>Açaí - 400 ml</AcaiTitle>
+                          <AcaiPrice>R$ 16,00</AcaiPrice>
+                      </AcaiInfo>
+                      <AcaiImage src={acaiimg2} alt="Açaí imagem" />
+                  </AcaiOptionContainer>
+              </AcaiOptionRow>
+              <AcaiOptionRow>
+                  <AcaiOptionContainer onClick={() => handleOpenModal('500ml')}>
+                      <AcaiInfo>
+                          <AcaiTitle>Açaí - 500 ml</AcaiTitle>
+                          <AcaiPrice>R$ 18,00</AcaiPrice>
+                      </AcaiInfo>
+                      <AcaiImage src={acaiimg4} alt="Açaí imagem" />
+                  </AcaiOptionContainer>
+                  <AcaiOptionContainer onClick={() => handleOpenModal('700ml')}>
+                      <AcaiInfo>
+                          <AcaiTitle>Açaí - 700 ml</AcaiTitle>
+                          <AcaiPrice>R$ 23,00</AcaiPrice>
+                      </AcaiInfo>
+                      <AcaiImage src={acaiimg5} alt="Açaí imagem" />
+                  </AcaiOptionContainer>
+              </AcaiOptionRow>
+              <AcaiOptionRow>
+                  <AcaiOptionContainer onClick={() => handleOpenModal('1L')}>
+                      <AcaiInfo>
+                          <AcaiTitle>Açaí - 1 Litro</AcaiTitle>
+                          <AcaiPrice>R$ 40,00</AcaiPrice>
+                      </AcaiInfo>
+                      <AcaiImage src={litro} alt="Açaí imagem" />
+                  </AcaiOptionContainer>
+                  <AcaiOptionContainer onClick={() => handleOpenModal('Barca 550ml')}>
+                    <AcaiInfo>
+                      <AcaiTitle>Barca 550ml</AcaiTitle>
+                      <AcaiPrice>R$ 25,00</AcaiPrice>
+                    </AcaiInfo>
+                    <AcaiImage src={barca} alt="Barca de açaí" />
+                  </AcaiOptionContainer>
+              </AcaiOptionRow>
+              </Content>
+              <AcaiModal
+                  isOpen={isModalOpen}
+                  onClose={handleCloseModal}
+                  onSelectOptions={handleSelectOptions}
+                  selectedAcai={selectedAcai}
+                  selectedOptions={selectedOptions}
+                  setSelectedOptions={setSelectedOptions}
+                  updateTotalPrice={updateTotalPrice}
+                  totalPrice={totalPrice}
+              />
+              {isCheckoutOpen && (
+                  <CheckoutForm
+                      pedidos={pedidos}  
+                      totalPrice={totalPrice}
+                      onConfirm={handleConfirmCheckout}
+                      onBack={handleBackFromCheckout}
+                  />
+              )}
+              {!isModalOpen && !isCheckoutOpen && (
+                  <Footer
+                  totalPrice={totalPrice}
+                  fecharPedido={handleFecharPedido}
+                  disabled={pedidos.length === 0}
+                  />
+              )}
+              </>
+            )};
 
         </>
     )

@@ -1,6 +1,8 @@
 import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
 import html2canvas from 'html2canvas';
+import { sendWhatsAppMessage } from '../../services/whatsappService';
+
 
 export default function CheckoutForm({
   pedidos,
@@ -45,55 +47,41 @@ export default function CheckoutForm({
   const handleSubmit = async (e) => {
     e.preventDefault();
     const imageUrl = await gerarComprovante();
-    try{
-            // Formata a mensagem para o WhatsApp como era antes
-            let message = `🍇 NOVO PEDIDO - AÇAÍ DO WAGÃO 🍇\n\n`;
-            message += `Cliente: ${cliente.nome}\n`;
-            message += `Telefone: ${cliente.telefone}\n`;
-            message += `Endereço: ${cliente.endereco}\n`;
-            message += `Forma de Pagamento: ${pagamento}\n`;
-            if (cliente.observacao) message += `Observações: ${cliente.observacao}\n\n`;
-            
-            message += `🛒 ITENS:\n\n`;
-            pedidos.forEach((pedido, index) => {
-              message += `Item ${index + 1}: Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
-              if (pedido.creme) message += `   ▪️ Creme: ${pedido.creme}\n`;
-              if (pedido.frutas.length > 0) message += `   ▪️ Frutas: ${pedido.frutas.join(', ')}\n`;
-              if (pedido.complementos.length > 0) message += `   ▪️ Complementos: ${pedido.complementos.join(', ')}\n`;
-              if (pedido.adicionais.length > 0) message += `   ▪️ Adicionais: ${pedido.adicionais.join(', ')}\n`;
-              if (pedido.caldas) message += `   ▪️ Calda: ${pedido.caldas}\n`;
-              message += `\n`;
-            });
-            
-            message += `Subtotal: R$ ${totalPrice.toFixed(2)}\n`;
-            message += `Frete: R$ ${frete.toFixed(2)}\n`;
-            message += `TOTAL A PAGAR: R$ ${(totalPrice + frete).toFixed(2)}\n\n`;
-            message += `⏱️ Tempo de preparo: 20-30 minutos\n\n`;
-        
-        // Adiciona o link para download do comprovante
-        const timestamp = new Date().getTime();
+    const timestamp = new Date().getTime();
+  
+    try {
+      if (imageUrl) {
         localStorage.setItem(`comprovante-${timestamp}`, imageUrl);
-        const cleanUrl = window.location.origin + window.location.pathname;
-        message += `📎 Comprovante para impressão: ${cleanUrl}?download=${timestamp}`;
-        message += `\n\n⚠️ *ATENÇÃO:* Clique em ENVIAR no WhatsApp para finalizar seu pedido!\n\n`;
-
-        // Abertura otimizada para mobile
-        if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-          // Método para mobile 91672740
-          window.location.href = `https://wa.me/5561990449507?text=${encodeURIComponent(message)}`;
-        } else {
-          // Método para desktop
-          window.open(`https://wa.me/5561990449507text=${encodeURIComponent(message)}`, '_blank');
-        }
-        // Finaliza o processo
-        setTimeout(() => {
-          onConfirm(cliente);
-        }, 1500);
-    }catch (error) {
+      }
+  
+      sendWhatsAppMessage({
+        pedidos,
+        totalPrice,
+        nome: cliente.nome,
+        telefone: cliente.telefone,
+        endereco: cliente.endereco,
+        observacao: cliente.observacao,
+        frete,
+        pagamento,
+        imageUrl,
+        timestamp
+      });
+  
+      setTimeout(() => {
+        onConfirm({
+          nome: cliente.nome,
+          telefone: cliente.telefone,
+          endereco: cliente.endereco,
+          observacao: cliente.observacao,
+          regiao: regiao,
+          frete: frete,
+          imageUrl: imageUrl
+        });
+      }, 1500);
+    } catch (error) {
       console.error("Erro:", error);
       alert("Ocorreu um erro. Por favor, tente novamente.");
     }
-
   };
 
   return (
