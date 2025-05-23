@@ -42,10 +42,10 @@ export const sendWhatsAppMessage = ({
   
     message += `⚠️ *ATENÇÃO:* Clique em ENVIAR no WhatsApp para finalizar seu pedido!\n\n`;
   
-    // Abre o WhatsApp
+    // Abre o WhatsApp 991672740
     if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      window.location.href = `https://wa.me/5561990449507?text=${encodeURIComponent(message)}`;
+      window.location.href = `https://wa.me/5561991672740?text=${encodeURIComponent(message)}`;
     } else {
-      window.open(`https://wa.me/5561990449507?text=${encodeURIComponent(message)}`, '_blank');
+      window.open(`https://wa.me/5561991672740?text=${encodeURIComponent(message)}`, '_blank');
     }
   };

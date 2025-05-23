@@ -27,7 +27,6 @@ export default function App() {
         caldas: null
     });
     const [totalPrice, setTotalPrice] = useState(0);
-    const [totalPedido, setTotalPedido] = useState(0);
     const [pedidos, setPedidos] = useState([]);
     const { pathname, search } = window.location;
     const isDownloadPage = pathname === '/download' || search.includes('download=');
