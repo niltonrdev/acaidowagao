@@ -80,30 +80,40 @@ export default function App() {
         setIsCheckoutOpen(false);
     };
 
-    React.useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const downloadTimestamp = params.get('download');
-        
-        if (downloadTimestamp) {
-          const imageUrl = localStorage.getItem(`comprovante-${downloadTimestamp}`);
-          if (imageUrl) {
-            document.body.style.visibility = 'hidden';
-            const link = document.createElement('a');
-            link.href = imageUrl;
-            link.download = `comprovante-acai-${downloadTimestamp}.png`;
-            document.body.appendChild(link);
+    useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const downloadTimestamp = params.get('download');
+      
+      if (downloadTimestamp) {
+        const imageUrl = localStorage.getItem(`comprovante-${downloadTimestamp}`);
+        if (imageUrl) {
+          // Força o download mesmo se o popup for bloqueado
+          const link = document.createElement('a');
+          link.href = imageUrl;
+          link.download = `comprovante-acai-${downloadTimestamp}.png`;
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          
+          // Tenta abrir em nova janela primeiro
+          const newWindow = window.open('', '_blank');
+          if (newWindow) {
+            newWindow.document.write(`
+              <html><body style="margin:0;padding:0;">
+                <img src="${imageUrl}" style="max-width:100%;height:auto;" />
+              </body></html>
+            `);
+          } else {
+            // Se popup foi bloqueado, força download
             link.click();
-            document.body.removeChild(link);
-            
-            // Limpa o localStorage após o download
-            localStorage.removeItem(`comprovante-${downloadTimestamp}`);
-            
-            // Remove o parâmetro da URL sem recarregar a página
-            window.history.replaceState({}, document.title, window.location.pathname);
-            document.body.style.visibility = 'visible';
           }
+          
+          document.body.removeChild(link);
+          
+          // Remove o parâmetro da URL sem recarregar
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
-      }, []);
+      }
+    }, []);
       
       const handleConfirmCheckout = async ({ nome, telefone, endereco, observacao, regiao, frete, imageUrl }) => {
         // Abre a imagem em nova aba se existir
