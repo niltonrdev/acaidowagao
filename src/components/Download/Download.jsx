@@ -5,81 +5,51 @@ import HeaderLogo from '../Header/HeaderLogo';
 export default function DownloadPage() {
   const [imageUrl, setImageUrl] = useState(null);
   const [timestamp, setTimestamp] = useState(null);
-  const [downloadAttempted, setDownloadAttempted] = useState(false);
-
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const ts = params.get('download');
-    
-    if (ts) {
-      const url = localStorage.getItem(`comprovante-${ts}`);
-      
-      if (url) {
-        setImageUrl(url);
-        setTimestamp(ts);
-        
-        // Tenta fazer o download apenas uma vez
-        if (!downloadAttempted) {
-          handleDownload(url, ts);
-          setDownloadAttempted(true);
-        }
-      } else {
-        console.error('Comprovante não encontrado no localStorage');
-      }
-      
-      // Limpa a URL após processar
-      window.history.replaceState({}, document.title, window.location.pathname);
+    const ts = params.get('download') || params.get('ts');
+    const url = localStorage.getItem(`comprovante-${ts}`);
+
+    if (url) {
+      setImageUrl(url);
+      setTimestamp(ts);
+      handleDownload(url, ts); // Faz o download automático
     }
-  }, [downloadAttempted]);
+  }, []);
 
   const handleDownload = (url, ts) => {
-    try {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `comprovante-acai-${ts}.png`;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      
-      // Limpa após um tempo
-      setTimeout(() => {
-        document.body.removeChild(link);
-        // Não remove do localStorage imediatamente - permite novo download
-      }, 100);
-    } catch (error) {
-      console.error('Erro ao baixar comprovante:', error);
-    }
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `comprovante-acai-${ts}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Não remove do localStorage imediatamente
+    window.history.replaceState({}, document.title, window.location.pathname);
   };
+
   return (
     <>
-    <HeaderLogo />
-    <DownloadContainer>
+      <HeaderLogo />
+      <DownloadContainer>
       <DownloadBox>
-        <h2>Download do Comprovante</h2>
-        {imageUrl ? (
-          <>
-            <p>Seu comprovante está pronto para download.</p>
-            <DownloadButton 
-              onClick={() => handleDownload(imageUrl, timestamp)}
-            >
-              Clique aqui para baixar
-            </DownloadButton>
-            <p style={{fontSize: '0.9rem', color: '#666'}}>
-              Se o download não iniciou automaticamente, use o botão acima.
-            </p>
-          </>
-        ) : (
-          <>
-            <p>Não foi possível encontrar o comprovante.</p>
-            <p style={{fontSize: '0.9rem', color: '#666'}}>
-              Por favor, verifique se você acessou o link correto ou tente novamente.
-            </p>
-          </>
-        )}
-      </DownloadBox>
-    </DownloadContainer>
-  </>
-);
+          <h2>Download do Comprovante</h2>
+          <p>Se o download não iniciou automaticamente ou deseja baixar novamente:</p>
+          <DownloadButton 
+            onClick={() => {
+              if (imageUrl && timestamp) {
+                handleDownload(imageUrl, timestamp);
+              }
+            }}
+            disabled={!imageUrl}
+          >
+            Clique aqui para baixar
+          </DownloadButton>
+        </DownloadBox>
+      </DownloadContainer>
+    </>
+  );
 }
 
 const DownloadContainer = styled.div`
