@@ -53,8 +53,7 @@ export default function CheckoutForm({
       if (imageUrl) {
         localStorage.setItem(`comprovante-${timestamp}`, imageUrl);
       }
-      const downloadUrl = `${window.location.origin}/api/download?timestamp=${timestamp}`;
-
+  
       sendWhatsAppMessage({
         pedidos,
         totalPrice,
@@ -64,7 +63,7 @@ export default function CheckoutForm({
         observacao: cliente.observacao,
         frete,
         pagamento,
-        downloadUrl,
+        imageUrl,
         timestamp
       });
   

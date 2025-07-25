@@ -1,76 +1,82 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import HeaderLogo from '../Header/HeaderLogo';
-import { useRouter } from 'next/router';
 
 export default function DownloadPage() {
   const [imageUrl, setImageUrl] = useState(null);
   const [timestamp, setTimestamp] = useState(null);
   const [downloadAttempted, setDownloadAttempted] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const router = useRouter();
-  const { download } = router.query;
 
   useEffect(() => {
-    if (download) {
-      handleDownload(download);
-    }
-  }, [download]);
-
-
-  const handleDownload = async (timestamp) => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/download?timestamp=${timestamp}`);
+    const params = new URLSearchParams(window.location.search);
+    const ts = params.get('download');
+    
+    if (ts) {
+      const url = localStorage.getItem(`comprovante-${ts}`);
       
-      if (!response.ok) {
-        throw new Error('Comprovante não encontrado');
+      if (url) {
+        setImageUrl(url);
+        setTimestamp(ts);
+        
+        // Tenta fazer o download apenas uma vez
+        if (!downloadAttempted) {
+          handleDownload(url, ts);
+          setDownloadAttempted(true);
+        }
+      } else {
+        console.error('Comprovante não encontrado no localStorage');
       }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `comprovante-acai-${timestamp}.png`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
       
-      setLoading(false);
-    } catch (err) {
-      console.error('Erro ao baixar:', err);
-      setError(err.message);
-      setLoading(false);
+      // Limpa a URL após processar
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [downloadAttempted]);
+
+  const handleDownload = (url, ts) => {
+    try {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `comprovante-acai-${ts}.png`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      
+      // Limpa após um tempo
+      setTimeout(() => {
+        document.body.removeChild(link);
+        // Não remove do localStorage imediatamente - permite novo download
+      }, 100);
+    } catch (error) {
+      console.error('Erro ao baixar comprovante:', error);
     }
   };
   return (
     <>
     <HeaderLogo />
     <DownloadContainer>
-       <DownloadBox>
-          <h2>Download do Comprovante</h2>
-          {loading ? (
-            <p>Preparando download...</p>
-          ) : error ? (
-            <>
-              <p>Não foi possível baixar o comprovante.</p>
-              <p style={{fontSize: '0.9rem', color: '#666'}}>
-                {error}
-              </p>
-            </>
-          ) : (
-            <>
-              <p>Seu comprovante foi baixado com sucesso!</p>
-              <DownloadButton 
-                onClick={() => handleDownload(download)}
-              >
-                Baixar novamente
-              </DownloadButton>
-            </>
-          )}
-        </DownloadBox>
+      <DownloadBox>
+        <h2>Download do Comprovante</h2>
+        {imageUrl ? (
+          <>
+            <p>Seu comprovante está pronto para download.</p>
+            <DownloadButton 
+              onClick={() => handleDownload(imageUrl, timestamp)}
+            >
+              Clique aqui para baixar
+            </DownloadButton>
+            <p style={{fontSize: '0.9rem', color: '#666'}}>
+              Se o download não iniciou automaticamente, use o botão acima.
+            </p>
+          </>
+        ) : (
+          <>
+            <p>Não foi possível encontrar o comprovante.</p>
+            <p style={{fontSize: '0.9rem', color: '#666'}}>
+              Por favor, verifique se você acessou o link correto ou tente novamente.
+            </p>
+          </>
+        )}
+      </DownloadBox>
     </DownloadContainer>
   </>
 );
