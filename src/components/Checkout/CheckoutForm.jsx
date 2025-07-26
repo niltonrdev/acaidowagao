@@ -40,7 +40,7 @@ const sendWhatsAppMessage = ({
   message += `\n*Comprovante para impressão:* ${downloadLink}\n`;
   message += `\n*ATENÇÃO:* Clique em ENVIAR no WhatsApp para finalizar seu pedido!`;
 
-  const whatsappUrl = `https://wa.me/5561990449507?text=${encodeURIComponent(message)}`; //5561985955675
+  const whatsappUrl = `https://wa.me/5561991672740?text=${encodeURIComponent(message)}`; //5561991672740
   window.open(whatsappUrl, '_blank');
 };
 
