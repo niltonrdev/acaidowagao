@@ -1,14 +1,58 @@
 import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
 import html2canvas from 'html2canvas';
-import { sendWhatsAppMessage } from '../../services/whatsappService';
+import { doc, setDoc } from 'firebase/firestore'; // Importa setDoc para uso direto aqui
+
+// Função para enviar mensagem via WhatsApp (adaptada para o novo fluxo)
+const sendWhatsAppMessage = ({
+  pedidos,
+  totalPrice,
+  nome,
+  telefone,
+  endereco,
+  observacao,
+  frete,
+  pagamento,
+  downloadLink
+}) => {
+  let message = `*NOVO PEDIDO - AÇAÍ DO WAGÃO*\n\n`;
+  message += `*Cliente:* ${nome}\n`;
+  message += `*Telefone:* ${telefone}\n`;
+  message += `*Endereço:* ${endereco}\n`;
+  message += `*Forma de Pagamento:* ${pagamento}\n`;
+  if (observacao) {
+    message += `*Observações:* ${observacao}\n`;
+  }
+  message += `\n*ITENS:*\n`;
+
+  pedidos.forEach((pedido, index) => {
+    message += `\n*Item ${index + 1}:* Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
+    if (pedido.creme) message += `  - Creme: ${pedido.creme}\n`;
+    if (pedido.frutas.length > 0) message += `  - Frutas: ${pedido.frutas.join(', ')}\n`;
+    if (pedido.complementos.length > 0) message += `  - Complementos: ${pedido.complementos.join(', ')}\n`;
+    if (pedido.adicionais.length > 0) message += `  - Adicionais: ${pedido.adicionais.join(', ')}\n`;
+    if (pedido.caldas) message += `  - Calda: ${pedido.caldas}\n`;
+  });
+
+  message += `\n*Subtotal:* R$ ${totalPrice.toFixed(2)}\n`;
+  message += `*Frete:* R$ ${frete.toFixed(2)}\n`;
+  message += `*TOTAL A PAGAR:* R$ ${(totalPrice + frete).toFixed(2)}\n`;
+  message += `\n*Comprovante para impressão:* ${downloadLink}\n`;
+  message += `\n*ATENÇÃO:* Clique em ENVIAR no WhatsApp para finalizar seu pedido!`;
+
+  const whatsappUrl = `https://wa.me/5561990449507?text=${encodeURIComponent(message)}`; //5561985955675
+  window.open(whatsappUrl, '_blank');
+};
 
 
 export default function CheckoutForm({
   pedidos,
   totalPrice,
   onConfirm,
-  onBack
+  onBack,
+  db, // Recebe o db do App.jsx
+  userId, // Recebe o userId do App.jsx
+  appId // Recebe o appId do App.jsx
 }) {
   const [cliente, setCliente] = useState({
     nome: '',
@@ -36,24 +80,69 @@ export default function CheckoutForm({
   };
 
   const gerarComprovante = async () => {
-    const canvas = await html2canvas(comprovanteRef.current, {
-      scale: 2,
-      logging: false,
-      useCORS: true
-    });
-    return canvas.toDataURL('image/png');
+    if (!comprovanteRef.current) {
+      console.error("Referência do comprovante não disponível para html2canvas.");
+      return null;
+    }
+    try {
+      const canvas = await html2canvas(comprovanteRef.current, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        // Adicionar um pequeno atraso pode ajudar na renderização completa
+        // beforeDraw: (canvas) => {
+        //   return new Promise(resolve => setTimeout(resolve, 50));
+        // }
+      });
+      const dataUrl = canvas.toDataURL('image/png');
+      console.log("Comprovante gerado. Tamanho da URL:", dataUrl.length);
+      return dataUrl;
+    } catch (error) {
+      console.error("Erro ao gerar comprovante com html2canvas:", error);
+      return null;
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const imageUrl = await gerarComprovante();
-    const timestamp = new Date().getTime();
-  
+
+    if (!db || !userId) {
+        console.error("Firestore não inicializado ou usuário não autenticado. Não é possível salvar o comprovante.");
+        alert("Ocorreu um erro: Conexão com o banco de dados não estabelecida. Por favor, tente novamente.");
+        return;
+    }
+
     try {
-      if (imageUrl) {
-        localStorage.setItem(`comprovante-${timestamp}`, imageUrl);
+      const imageUrl = await gerarComprovante();
+
+      if (!imageUrl || imageUrl.length < 100) { // Verifica se a URL da imagem é válida (não vazia ou muito pequena)
+        console.error("A URL da imagem do comprovante está vazia ou inválida.");
+        alert("Não foi possível gerar o comprovante. Por favor, verifique os dados e tente novamente.");
+        return;
       }
-  
+
+      const timestamp = new Date().getTime();
+
+      // Salva a imagem no Firestore
+      const comprovanteDocRef = doc(db, `artifacts/${appId}/public/data/comprovantes/${timestamp}`);
+      await setDoc(comprovanteDocRef, {
+        imageUrl: imageUrl,
+        timestamp: timestamp,
+        userId: userId,
+        cliente: cliente,
+        pedidos: pedidos,
+        totalPrice: totalPrice,
+        frete: frete,
+        pagamento: pagamento,
+        regiao: regiao,
+        createdAt: new Date().toISOString()
+      });
+      console.log("Comprovante salvo no Firestore com ID:", timestamp);
+
+      // Gera o link de download para o comprovante no Firestore
+      const downloadLink = `${window.location.origin}/download?download=${timestamp}`;
+
+      // Envia a mensagem do WhatsApp
       sendWhatsAppMessage({
         pedidos,
         totalPrice,
@@ -63,24 +152,17 @@ export default function CheckoutForm({
         observacao: cliente.observacao,
         frete,
         pagamento,
-        imageUrl,
-        timestamp
+        downloadLink // Passa o link do Firestore
       });
-  
+
+      // Confirma o checkout e reseta o pedido após as operações
       setTimeout(() => {
-        onConfirm({
-          nome: cliente.nome,
-          telefone: cliente.telefone,
-          endereco: cliente.endereco,
-          observacao: cliente.observacao,
-          regiao: regiao,
-          frete: frete,
-          imageUrl: imageUrl
-        });
+        onConfirm(); // Não precisa passar imageUrl e timestamp para onConfirm em App.jsx
       }, 1500);
+
     } catch (error) {
-      console.error("Erro:", error);
-      alert("Ocorreu um erro. Por favor, tente novamente.");
+      console.error("Erro ao processar pedido:", error);
+      alert("Ocorreu um erro ao finalizar o pedido. Por favor, tente novamente.");
     }
   };
 
@@ -89,7 +171,6 @@ export default function CheckoutForm({
       <CheckoutContent>
         <h2>Finalizar Pedido</h2>
 
-        {/* Lista de pedidos visível */}
         <PedidoResumo>
           <h3>Seus Pedidos:</h3>
           {pedidos.map((pedido, index) => (
@@ -103,28 +184,27 @@ export default function CheckoutForm({
             </PedidoItem>
           ))}
           <TotalContainer>
+            <TotalLine>
+              <span>Subtotal:</span>
+              <span>R$ {totalPrice.toFixed(2)}</span>
+            </TotalLine>
+
+            {frete > 0 ? (
               <TotalLine>
-                <span>Subtotal:</span>
-                <span>R$ {totalPrice.toFixed(2)}</span>
+                <span>Frete:</span>
+                <span>+ R$ {frete.toFixed(2)}</span>
               </TotalLine>
-              
-              {frete > 0 ? (
-                <TotalLine>
-                  <span>Frete:</span>
-                  <span>+ R$ {frete.toFixed(2)}</span>
-                </TotalLine>
-              ) : (
-                <FreteHint>*Adicionar endereço para cálculo de frete*</FreteHint>
-              )}
-              
-              <TotalLine className="grand-total">
-                <span>Total:</span>
-                <span>R$ {(totalPrice + frete).toFixed(2)}</span>
-              </TotalLine>
-            </TotalContainer>
+            ) : (
+              <FreteHint>*Adicionar endereço para cálculo de frete*</FreteHint>
+            )}
+
+            <TotalLine className="grand-total">
+              <span>Total:</span>
+              <span>R$ {(totalPrice + frete).toFixed(2)}</span>
+            </TotalLine>
+          </TotalContainer>
         </PedidoResumo>
 
-        {/* Formulário de dados do cliente */}
         <Form onSubmit={handleSubmit}>
           <FormGroup>
             <Label>Nome:</Label>
@@ -139,19 +219,19 @@ export default function CheckoutForm({
 
           <FormGroup>
             <Label>Telefone:</Label>
-            <Input 
-              type="tel" 
-              name="telefone" 
-              value={cliente.telefone} 
-              onChange={handleChange} 
-              required 
+            <Input
+              type="tel"
+              name="telefone"
+              value={cliente.telefone}
+              onChange={handleChange}
+              required
               placeholder="(XX) XXXXX-XXXX"
             />
           </FormGroup>
 
           <FormGroup>
             <Label>Região do endereço:</Label>
-            <Select 
+            <Select
               value={regiao}
               onChange={(e) => {
                 const selected = regioes.find(r => r.nome === e.target.value);
@@ -171,19 +251,19 @@ export default function CheckoutForm({
 
           <FormGroup>
             <Label>Endereço:</Label>
-            <Input 
-              type="text" 
-              name="endereco" 
-              value={cliente.endereco} 
-              onChange={handleChange} 
-              required 
+            <Input
+              type="text"
+              name="endereco"
+              value={cliente.endereco}
+              onChange={handleChange}
+              required
               placeholder="Rua, Número, Bairro"
             />
           </FormGroup>
-          
+
           <FormGroup>
             <Label>Forma de Pagamento:</Label>
-            <Select 
+            <Select
               value={pagamento}
               onChange={(e) => setPagamento(e.target.value)}
               required
@@ -199,10 +279,10 @@ export default function CheckoutForm({
 
           <FormGroup>
             <Label>Observações:</Label>
-            <TextArea 
-              name="observacao" 
-              value={cliente.observacao} 
-              onChange={handleChange} 
+            <TextArea
+              name="observacao"
+              value={cliente.observacao}
+              onChange={handleChange}
               placeholder="Ponto de referência, instruções especiais..."
             />
           </FormGroup>
@@ -218,7 +298,7 @@ export default function CheckoutForm({
         </Form>
 
         {/* Comprovante oculto (só para gerar a imagem) */}
-        <div style={{ position: 'absolute', left: '-9999px' }}>
+        <div style={{ position: 'absolute', left: '-9999px', width: '350px', padding: '20px', backgroundColor: 'white' }}> {/* Adicionado largura e padding para melhor captura */}
           <Comprovante ref={comprovanteRef}>
             <Header>
               <h3>AÇAÍ DO WAGÃO</h3>
@@ -249,7 +329,7 @@ export default function CheckoutForm({
               ))}
             </Itens>
 
-            
+
             <Total>
               <p><strong>Subtotal:</strong> R$ {totalPrice.toFixed(2)}</p>
               <p><strong>Frete:</strong> R$ {frete.toFixed(2)}</p>
@@ -267,6 +347,7 @@ export default function CheckoutForm({
   );
 }
 
+// Estilos dos componentes
 const CheckoutOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -297,13 +378,6 @@ const PedidoResumo = styled.div`
   border-radius: 10px;
   margin-bottom: 20px;
 `;
-
-// const Total = styled.p`
-//   font-weight: bold;
-//   font-size: 1.2rem;
-//   margin-top: 10px;
-//   color: #6A3093;
-// `;
 
 const Form = styled.form`
   display: flex;
@@ -393,7 +467,7 @@ const PedidoItem = styled.div`
     margin-bottom: 10px;
     border-radius: 8px;
     border-left: 4px solid #6A3093;
-    
+
     p {
         margin: 5px 0;
         font-size: 0.9rem;
@@ -488,7 +562,7 @@ const TotalLine = styled.div`
   display: flex;
   justify-content: space-between;
   margin: 5px 0;
-  
+
   &.grand-total {
     font-weight: bold;
     font-size: 1.1rem;

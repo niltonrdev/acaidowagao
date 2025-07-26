@@ -1,21 +1,51 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import HeaderLogo from '../Header/HeaderLogo';
+import { getFirestore, doc, getDoc } from 'firebase/firestore'; // Importa getDoc
 
-export default function DownloadPage() {
+export default function DownloadPage({ db, appId }) { // Recebe db e appId como props
   const [imageUrl, setImageUrl] = useState(null);
   const [timestamp, setTimestamp] = useState(null);
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const ts = params.get('download') || params.get('ts');
-    const url = localStorage.getItem(`comprovante-${ts}`);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    if (url) {
-      setImageUrl(url);
-      setTimestamp(ts);
-      handleDownload(url, ts); // Faz o download automático
+  useEffect(() => {
+    const fetchComprovante = async () => {
+      setIsLoading(true);
+      setError(null);
+      const params = new URLSearchParams(window.location.search);
+      const ts = params.get('download') || params.get('ts');
+
+      if (ts && db) {
+        try {
+          const comprovanteRef = doc(db, `artifacts/${appId}/public/data/comprovantes/${ts}`);
+          const docSnap = await getDoc(comprovanteRef);
+
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setImageUrl(data.imageUrl);
+            setTimestamp(data.timestamp);
+            handleDownload(data.imageUrl, data.timestamp); // Faz o download automático
+          } else {
+            setError("Comprovante não encontrado.");
+            console.log("Nenhum comprovante encontrado para o timestamp:", ts);
+          }
+        } catch (err) {
+          setError("Erro ao buscar comprovante: " + err.message);
+          console.error("Erro ao buscar comprovante:", err);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setError("Timestamp ou conexão com o banco de dados ausente.");
+        setIsLoading(false);
+      }
+    };
+
+    if (db) { // Garante que o db está inicializado antes de tentar buscar
+      fetchComprovante();
     }
-  }, []);
+  }, [db, appId]); // Dependências: db e appId
 
   const handleDownload = (url, ts) => {
     const link = document.createElement('a');
@@ -24,8 +54,8 @@ export default function DownloadPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    // Não remove do localStorage imediatamente
+
+    // Remove o parâmetro da URL sem recarregar a página
     window.history.replaceState({}, document.title, window.location.pathname);
   };
 
@@ -33,25 +63,34 @@ export default function DownloadPage() {
     <>
       <HeaderLogo />
       <DownloadContainer>
-      <DownloadBox>
+        <DownloadBox>
           <h2>Download do Comprovante</h2>
-          <p>Se o download não iniciou automaticamente ou deseja baixar novamente:</p>
-          <DownloadButton 
-            onClick={() => {
-              if (imageUrl && timestamp) {
-                handleDownload(imageUrl, timestamp);
-              }
-            }}
-            disabled={!imageUrl}
-          >
-            Clique aqui para baixar
-          </DownloadButton>
+          {isLoading ? (
+            <p>Carregando comprovante...</p>
+          ) : error ? (
+            <p style={{ color: 'red' }}>{error}</p>
+          ) : (
+            <>
+              <p>Se o download não iniciou automaticamente ou deseja baixar novamente:</p>
+              <DownloadButton
+                onClick={() => {
+                  if (imageUrl && timestamp) {
+                    handleDownload(imageUrl, timestamp);
+                  }
+                }}
+                disabled={!imageUrl}
+              >
+                Clique aqui para baixar
+              </DownloadButton>
+            </>
+          )}
         </DownloadBox>
       </DownloadContainer>
     </>
   );
 }
 
+// Estilos dos componentes
 const DownloadContainer = styled.div`
   padding-top: 120px;
   min-height: 100vh;
@@ -92,12 +131,4 @@ const DownloadButton = styled.button`
     transform: none;
     box-shadow: none;
   }
-`;
-
-const CodeBox = styled.div`
-  background: #f0f0f0;
-  padding: 10px;
-  border-radius: 5px;
-  font-family: monospace;
-  word-break: break-all;
 `;
