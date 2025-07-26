@@ -142,7 +142,9 @@ export default function App() {
         setTotalPrice(0);
         setIsCheckoutOpen(false);
     };
-
+    const handleClearOrder = () => {
+      resetPedido();
+    };
     // Função para confirmar o checkout e salvar o comprovante no Firestore
     const handleConfirmCheckout = async ({ nome, telefone, endereco, observacao, regiao, frete, imageUrl, timestamp }) => {
         if (!db || !userId) {
@@ -255,7 +257,7 @@ export default function App() {
                         selectedAcai={selectedAcai}
                         selectedOptions={selectedOptions}
                         setSelectedOptions={setSelectedOptions}
-                        updateTotalPrice={setTotalPrice} // Passa setTotalPrice diretamente
+                        updateTotalPrice={setTotalPrice} 
                         totalPrice={totalPrice}
                     />
                     {isCheckoutOpen && (
@@ -264,14 +266,15 @@ export default function App() {
                             totalPrice={totalPrice}
                             onConfirm={handleConfirmCheckout}
                             onBack={handleBackFromCheckout}
-                            db={db} // Passa o db para o CheckoutForm
-                            userId={userId} // Passa o userId para o CheckoutForm
-                            appId={appId} // Passa o appId para o CheckoutForm
+                            db={db} 
+                            userId={userId} 
+                            appId={appId} 
                         />
                     )}
                     {!isModalOpen && !isCheckoutOpen && (
                         <Footer
                             totalPrice={totalPrice}
+                            onClearOrder={handleClearOrder} 
                             fecharPedido={handleFecharPedido}
                             disabled={pedidos.length === 0}
                         />

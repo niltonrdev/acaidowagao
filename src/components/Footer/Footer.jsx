@@ -1,21 +1,29 @@
 import React from 'react';
 import styled from 'styled-components';
 
-export default function Footer({ totalPrice, fecharPedido, disabled }) {
+export default function Footer({ totalPrice, fecharPedido, disabled, onClearOrder }) {
   return (
     <FooterContainer>
     <TotalContainer>
       <TotalText>Total do Pedido:</TotalText>
       <TotalValue>R$ {totalPrice.toFixed(2)}</TotalValue>
     </TotalContainer>
-    <CheckoutButton 
-        onClick={fecharPedido}
-        disabled={disabled}
-      >
-      Fechar Pedido
-      <ArrowIcon>→</ArrowIcon>
-    </CheckoutButton>
-  </FooterContainer>
+    <ButtonGroup> 
+        <ClearButton
+          onClick={onClearOrder}
+          disabled={disabled} 
+        >
+          Limpar Pedido
+        </ClearButton>
+        <CheckoutButton
+          onClick={fecharPedido}
+          disabled={disabled}
+        >
+          Fechar Pedido
+          <ArrowIcon>→</ArrowIcon>
+        </CheckoutButton>
+      </ButtonGroup>
+    </FooterContainer>
   );
 }
 
@@ -31,11 +39,23 @@ const FooterContainer = styled.footer`
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+
+  @media screen and (max-width: 768px) {
+    flex-direction: column;
+    padding: 10px;
+  }
 `;
 
 const TotalContainer = styled.div`
   display: flex;
   flex-direction: column;
+  margin-right: 15px; /* Espaçamento entre o total e os botões */
+
+  @media screen and (max-width: 768px) {
+    margin-right: 0;
+    margin-bottom: 10px;
+    align-items: center;
+  }
 `;
 
 const TotalText = styled.p`
@@ -48,6 +68,17 @@ const TotalValue = styled.p`
   margin: 0;
   font-size: 1.3rem;
   font-weight: 600;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 10px; /* Espaçamento entre os botões */
+
+  @media screen and (max-width: 768px) {
+    width: 100%;
+    flex-direction: column;
+    gap: 8px;
+  }
 `;
 
 const CheckoutButton = styled.button`
@@ -64,9 +95,24 @@ const CheckoutButton = styled.button`
   transition: all 0.3s ease;
   opacity: ${({ disabled }) => disabled ? 0.6 : 1};
   cursor: ${({ disabled }) => disabled ? 'not-allowed' : 'pointer'};
-    
+
   &:hover {
     background: ${({ disabled }) => disabled ? '#6A3093' : '#8E44AD'};
+    transform: ${({ disabled }) => disabled ? 'none' : 'translateY(-2px)'};
+  }
+
+  @media screen and (max-width: 768px) {
+    width: 100%;
+    justify-content: center;
+  }
+`;
+
+const ClearButton = styled(CheckoutButton)` /* Reutiliza estilos do CheckoutButton */
+  background: #e0e0e0; /* Cor diferente para o botão de limpar */
+  color: #333;
+
+  &:hover {
+    background: ${({ disabled }) => disabled ? '#e0e0e0' : '#d0d0d0'};
     transform: ${({ disabled }) => disabled ? 'none' : 'translateY(-2px)'};
   }
 `;
