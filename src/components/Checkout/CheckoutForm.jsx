@@ -89,10 +89,6 @@ export default function CheckoutForm({
         scale: 2,
         logging: false,
         useCORS: true,
-        // Adicionar um pequeno atraso pode ajudar na renderização completa
-        // beforeDraw: (canvas) => {
-        //   return new Promise(resolve => setTimeout(resolve, 50));
-        // }
       });
       const dataUrl = canvas.toDataURL('image/png');
       console.log("Comprovante gerado. Tamanho da URL:", dataUrl.length);
@@ -108,42 +104,15 @@ export default function CheckoutForm({
 
     if (!db || !userId) {
         console.error("Firestore não inicializado ou usuário não autenticado. Não é possível salvar o comprovante.");
-        alert("Ocorreu um erro: Conexão com o banco de dados não estabelecida. Por favor, tente novamente.");
+        console.log("Erro: Conexão com o banco de dados não estabelecida. Por favor, tente novamente.");
         return;
     }
 
-    try {
-      const imageUrl = await gerarComprovante();
+    const timestamp = new Date().getTime();
+    const downloadLink = `${window.location.origin}/download?download=${timestamp}`;
 
-      if (!imageUrl || imageUrl.length < 100) { // Verifica se a URL da imagem é válida (não vazia ou muito pequena)
-        console.error("A URL da imagem do comprovante está vazia ou inválida.");
-        alert("Não foi possível gerar o comprovante. Por favor, verifique os dados e tente novamente.");
-        return;
-      }
-
-      const timestamp = new Date().getTime();
-
-      // Salva a imagem no Firestore
-      const comprovanteDocRef = doc(db, `artifacts/${appId}/public/data/comprovantes/${timestamp}`);
-      await setDoc(comprovanteDocRef, {
-        imageUrl: imageUrl,
-        timestamp: timestamp,
-        userId: userId,
-        cliente: cliente,
-        pedidos: pedidos,
-        totalPrice: totalPrice,
-        frete: frete,
-        pagamento: pagamento,
-        regiao: regiao,
-        createdAt: new Date().toISOString()
-      });
-      console.log("Comprovante salvo no Firestore com ID:", timestamp);
-
-      // Gera o link de download para o comprovante no Firestore
-      const downloadLink = `${window.location.origin}/download?download=${timestamp}`;
-
-      // Envia a mensagem do WhatsApp
-      sendWhatsAppMessage({
+    // 1. Tenta enviar a mensagem do WhatsApp imediatamente
+    sendWhatsAppMessage({
         pedidos,
         totalPrice,
         nome: cliente.nome,
@@ -152,17 +121,42 @@ export default function CheckoutForm({
         observacao: cliente.observacao,
         frete,
         pagamento,
-        downloadLink // Passa o link do Firestore
-      });
+        downloadLink // Passa o link do Firestore que será salvo
+    });
 
-      // Confirma o checkout e reseta o pedido após as operações
-      setTimeout(() => {
-        onConfirm(); // Não precisa passar imageUrl e timestamp para onConfirm em App.jsx
-      }, 1500);
+    // 2. Em segundo plano, gera o comprovante e salva no Firestore
+    try {
+        const imageUrl = await gerarComprovante();
+
+        if (!imageUrl || imageUrl.length < 100) {
+            console.warn("A URL da imagem do comprovante está vazia ou inválida. O pedido foi enviado, mas o comprovante pode não estar disponível para download.");
+            // Você pode adicionar um feedback visual não-bloqueante aqui, se desejar
+        } else {
+            const comprovanteDocRef = doc(db, `artifacts/${appId}/public/data/comprovantes/${timestamp}`);
+            await setDoc(comprovanteDocRef, {
+                imageUrl: imageUrl,
+                timestamp: timestamp,
+                userId: userId,
+                cliente: cliente,
+                pedidos: pedidos,
+                totalPrice: totalPrice,
+                frete: frete,
+                pagamento: pagamento,
+                regiao: regiao,
+                createdAt: new Date().toISOString()
+            });
+            console.log("Comprovante salvo no Firestore com ID:", timestamp);
+        }
+
+        // 3. Confirma o checkout e reseta o pedido após as operações (ou após a tentativa)
+        setTimeout(() => {
+            onConfirm();
+        }, 1500);
 
     } catch (error) {
-      console.error("Erro ao processar pedido:", error);
-      alert("Ocorreu um erro ao finalizar o pedido. Por favor, tente novamente.");
+        console.error("Erro ao processar pedido e/ou salvar comprovante:", error);
+        // Substituído alert() por console.log para evitar bloqueio em mobile
+        console.log("Ocorreu um erro ao finalizar o pedido. Por favor, tente novamente.");
     }
   };
 
@@ -298,7 +292,7 @@ export default function CheckoutForm({
         </Form>
 
         {/* Comprovante oculto (só para gerar a imagem) */}
-        <div style={{ position: 'absolute', left: '-9999px', width: '350px', padding: '20px', backgroundColor: 'white' }}> {/* Adicionado largura e padding para melhor captura */}
+        <div style={{ position: 'absolute', left: '-9999px', width: '350px', padding: '20px', backgroundColor: 'white' }}>
           <Comprovante ref={comprovanteRef}>
             <Header>
               <h3>AÇAÍ DO WAGÃO</h3>
