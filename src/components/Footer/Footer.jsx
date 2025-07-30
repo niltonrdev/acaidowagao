@@ -4,14 +4,14 @@ import styled from 'styled-components';
 export default function Footer({ totalPrice, fecharPedido, disabled, onClearOrder }) {
   return (
     <FooterContainer>
-    <TotalContainer>
-      <TotalText>Total do Pedido:</TotalText>
-      <TotalValue>R$ {totalPrice.toFixed(2)}</TotalValue>
-    </TotalContainer>
-    <ButtonGroup> 
+      <TotalContainer>
+        <TotalText>Total do Pedido:</TotalText>
+        <TotalValue>R$ {totalPrice.toFixed(2)}</TotalValue>
+      </TotalContainer>
+      <ButtonGroup>
         <ClearButton
           onClick={onClearOrder}
-          disabled={disabled} 
+          disabled={disabled}
         >
           Limpar Pedido
         </ClearButton>
@@ -41,20 +41,24 @@ const FooterContainer = styled.footer`
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
 
   @media screen and (max-width: 768px) {
-    flex-direction: column;
-    padding: 10px;
+    flex-direction: column; /* Altera para coluna no mobile */
+    padding: 10px; /* Reduz o padding geral */
   }
 `;
 
 const TotalContainer = styled.div`
   display: flex;
-  flex-direction: column;
-  margin-right: 15px; /* Espaçamento entre o total e os botões */
+  flex-direction: column; /* Padrão para desktop */
+  margin-right: 15px;
 
   @media screen and (max-width: 768px) {
+    flex-direction: row; /* Coloca texto e valor na mesma linha no mobile */
+    justify-content: space-between; /* Espaça-os */
+    width: 100%; /* Ocupa a largura total */
     margin-right: 0;
-    margin-bottom: 10px;
+    margin-bottom: 10px; /* Adiciona margem inferior para separar dos botões */
     align-items: center;
+    padding: 0 5px; /* Pequeno padding horizontal para não colar nas bordas */
   }
 `;
 
@@ -68,15 +72,19 @@ const TotalValue = styled.p`
   margin: 0;
   font-size: 1.3rem;
   font-weight: 600;
+
+  @media screen and (max-width: 768px) {
+    font-size: 1.1rem; /* Reduz um pouco o tamanho da fonte no mobile */
+  }
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
-  gap: 10px; /* Espaçamento entre os botões */
+  gap: 10px;
 
   @media screen and (max-width: 768px) {
     width: 100%;
-    flex-direction: column;
+    flex-direction: column; /* Empilha os botões no mobile */
     gap: 8px;
   }
 `;
@@ -104,11 +112,13 @@ const CheckoutButton = styled.button`
   @media screen and (max-width: 768px) {
     width: 100%;
     justify-content: center;
+    padding: 10px 15px; /* Reduz o padding dos botões no mobile */
+    font-size: 0.9rem; /* Reduz a fonte do botão */
   }
 `;
 
-const ClearButton = styled(CheckoutButton)` /* Reutiliza estilos do CheckoutButton */
-  background: #e0e0e0; /* Cor diferente para o botão de limpar */
+const ClearButton = styled(CheckoutButton)`
+  background: #e0e0e0;
   color: #333;
 
   &:hover {

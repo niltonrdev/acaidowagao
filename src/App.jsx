@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import HeaderLogo from './components/Header/HeaderLogo.jsx'; 
-import AcaiModal from './components/Body/Modal.jsx'; 
-import Footer from './components/Footer/Footer.jsx'; 
-import CheckoutForm from './components/Checkout/CheckoutForm.jsx'; 
-import Download from './components/Download/Download.jsx'; 
+import HeaderLogo from './components/Header/HeaderLogo.jsx';
+import AcaiModal from './components/Body/Modal.jsx';
+import Footer from './components/Footer/Footer.jsx';
+import CheckoutForm from './components/Checkout/CheckoutForm.jsx';
+import Download from './components/Download/Download.jsx';
 import styled, { createGlobalStyle } from 'styled-components';
 import acaiimg2 from './assets/acai2.jpeg';
 import acaiimg3 from './assets/acai3.jpeg';
@@ -18,15 +18,15 @@ import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 
 export default function App() {
-    // Variáveis globais do Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyDvJcPc0Z3chL_JsLucYg7-li1B2d2lxTs",
-      authDomain: "acaidowagaobsb.firebaseapp.com",
-      projectId: "acaidowagaobsb",
-      storageBucket: "acaidowagaobsb.firebasestorage.app",
-      messagingSenderId: "761926054075",
-      appId: "1:761926054075:web:c04dd9aa43ead362d6b99e"
-    };
+// Variáveis globais do Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyDvJcPc0Z3chL_JsLucYg7-li1B2d2lxTs",
+    authDomain: "acaidowagaobsb.firebaseapp.com",
+    projectId: "acaidowagaobsb",
+    storageBucket: "acaidowagaobsb.firebasestorage.app",
+    messagingSenderId: "761926054075",
+    appId: "1:761926054075:web:c04dd9aa43ead362d6b99e"
+  };
     const appId = firebaseConfig.appId;
     const initialAuthToken = null;
     // Estados da aplicação
@@ -64,22 +64,14 @@ export default function App() {
             if (user) {
                 setUserId(user.uid);
             } else {
-                if (initialAuthToken) {
-                    try {
-                        await signInWithCustomToken(firebaseAuth, initialAuthToken);
-                    } catch (error) {
-                        console.error("Erro ao autenticar com token personalizado:", error);
-                        await signInAnonymously(firebaseAuth);
-                    }
-                } else {
-                    await signInAnonymously(firebaseAuth);
-                }
+                // Para testes locais, sempre tentamos signInAnonymously se não houver token inicial
+                await signInAnonymously(firebaseAuth);
             }
             setIsAuthReady(true);
         });
 
         return () => unsubscribe();
-    }, [firebaseConfig, initialAuthToken]);
+    }, [firebaseConfig]);
 
     // Funções de manipulação de estado
     const handleOpenModal = (acaiType) => {
@@ -142,39 +134,14 @@ export default function App() {
         setTotalPrice(0);
         setIsCheckoutOpen(false);
     };
+
+    // Nova função para limpar todos os pedidos e reiniciar
     const handleClearOrder = () => {
-      resetPedido();
+        resetPedido();
     };
+
     // Função para confirmar o checkout e salvar o comprovante no Firestore
-    const handleConfirmCheckout = async ({ nome, telefone, endereco, observacao, regiao, frete, imageUrl, timestamp }) => {
-        if (!db || !userId) {
-            console.error("Firestore não inicializado ou usuário não autenticado.");
-            return;
-        }
-
-        try {
-            // Salva a imagem no Firestore
-            const comprovanteRef = doc(db, `artifacts/${appId}/public/data/comprovantes/${timestamp}`);
-            await setDoc(comprovanteRef, {
-                imageUrl: imageUrl,
-                timestamp: timestamp,
-                userId: userId,
-                pedidoDetails: {
-                    nome,
-                    telefone,
-                    endereco,
-                    observacao,
-                    regiao,
-                    frete,
-                    pedidos,
-                    totalPrice
-                }
-            });
-            console.log("Comprovante salvo no Firestore com ID:", timestamp);
-        } catch (error) {
-            console.error("Erro ao salvar comprovante no Firestore:", error);
-        }
-
+    const handleConfirmCheckout = async () => {
         resetPedido();
     };
 
@@ -257,7 +224,7 @@ export default function App() {
                         selectedAcai={selectedAcai}
                         selectedOptions={selectedOptions}
                         setSelectedOptions={setSelectedOptions}
-                        updateTotalPrice={setTotalPrice} 
+                        updateTotalPrice={setTotalPrice}
                         totalPrice={totalPrice}
                     />
                     {isCheckoutOpen && (
@@ -266,17 +233,17 @@ export default function App() {
                             totalPrice={totalPrice}
                             onConfirm={handleConfirmCheckout}
                             onBack={handleBackFromCheckout}
-                            db={db} 
-                            userId={userId} 
-                            appId={appId} 
+                            db={db}
+                            userId={userId}
+                            appId={appId}
                         />
                     )}
                     {!isModalOpen && !isCheckoutOpen && (
                         <Footer
                             totalPrice={totalPrice}
-                            onClearOrder={handleClearOrder} 
                             fecharPedido={handleFecharPedido}
                             disabled={pedidos.length === 0}
+                            onClearOrder={handleClearOrder}
                         />
                     )}
                 </>
@@ -310,7 +277,13 @@ const HeaderContainer = styled.div`
 `;
 
 const Content = styled.div`
-  padding-top: 170px; 
+  padding-top: 170px; /* Mantém o padding para o cabeçalho */
+  padding-bottom: 120px; /* Aumenta o padding inferior para o rodapé otimizado */
+
+  @media screen and (max-width: 768px) {
+    padding-top: 170px; /* Ajuste se o cabeçalho mudar de altura no mobile */
+    padding-bottom: 140px; /* Pode precisar de mais ou menos, ajuste conforme o teste */
+  }
 `;
 
 const AcaiOptionRow = styled.div`
@@ -372,4 +345,3 @@ const AcaiImage = styled.img`
     margin-top: 20px; 
   }
 `;
-
