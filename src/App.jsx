@@ -18,7 +18,7 @@ import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 
 export default function App() {
-// Variáveis globais do Firebase
+ // Variáveis globais do Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyDvJcPc0Z3chL_JsLucYg7-li1B2d2lxTs",
     authDomain: "acaidowagaobsb.firebaseapp.com",
@@ -28,7 +28,7 @@ const firebaseConfig = {
     appId: "1:761926054075:web:c04dd9aa43ead362d6b99e"
   };
     const appId = firebaseConfig.appId;
-    const initialAuthToken = null;
+    const initialAuthToken = null; 
     // Estados da aplicação
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -71,7 +71,7 @@ const firebaseConfig = {
         });
 
         return () => unsubscribe();
-    }, [firebaseConfig]);
+    }, [firebaseConfig]); 
 
     // Funções de manipulação de estado
     const handleOpenModal = (acaiType) => {
@@ -273,7 +273,7 @@ const HeaderContainer = styled.div`
   top: 0;
   left: 0;
   width: 100%;
-  z-index: 999; 
+  z-index: 999;
 `;
 
 const Content = styled.div`
@@ -281,8 +281,8 @@ const Content = styled.div`
   padding-bottom: 120px; /* Aumenta o padding inferior para o rodapé otimizado */
 
   @media screen and (max-width: 768px) {
-    padding-top: 170px; /* Ajuste se o cabeçalho mudar de altura no mobile */
-    padding-bottom: 140px; /* Pode precisar de mais ou menos, ajuste conforme o teste */
+    padding-top: 125px; /* Ajusta padding para o cabeçalho menor no mobile */
+    padding-bottom: 150px; /* Ajuste para o rodapé mais compacto, pode precisar de ajuste fino */
   }
 `;
 
@@ -296,9 +296,9 @@ const AcaiOptionRow = styled.div`
   @media screen and (max-width: 768px) {
     flex-direction: column;
     align-items: center;
-    padding: 15px; 
+    padding: 15px;
     width: 100%;
-    box-sizing: border-box; 
+    box-sizing: border-box;
   }
 `;
 
@@ -326,22 +326,31 @@ const AcaiInfo = styled.div`
 `;
 
 const AcaiTitle = styled.h2`
-  margin: 0 0 10px; 
-  font-size: 1.5rem; 
+  margin: 0 0 10px;
+  font-size: 1.5rem;
+
+  @media screen and (max-width: 768px) {
+    font-size: 1.3rem; /* Reduz um pouco o título no mobile */
+  }
 `;
 
 const AcaiPrice = styled.p`
-  margin: 0; 
-  font-size: 1.2rem; 
+  margin: 0;
+  font-size: 1.2rem;
+
+  @media screen and (max-width: 768px) {
+    font-size: 1.1rem; /* Reduz um pouco o preço no mobile */
+  }
 `;
 
 const AcaiImage = styled.img`
-  width: 100px; 
-  height: auto; 
-  margin-left: 20px; 
+  width: 100px;
+  height: auto;
+  margin-left: 20px;
 
   @media screen and (max-width: 768px) {
+    width: 120px; /* Aumenta um pouco a imagem no mobile */
     margin-left: 0;
-    margin-top: 20px; 
+    margin-top: 20px;
   }
 `;
