@@ -33,27 +33,27 @@ const sendWhatsAppMessage = ({
     // 1. LINHA PRINCIPAL: Define o prefixo e o item
     if (isAcai) {
         // Açaí recebe o prefixo "Açaí"
-        message += `Item ${index + 1}: Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n\n`;
+        message += `\nItem ${index + 1}: Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
     } else if (isBolo) {
         // Bolo recebe o subtítulo (para diferenciar do item simples)
-        message += `Item ${index + 1}: ${pedido.tamanho} (Bolo Vulcão) - R$ ${pedido.preco.toFixed(2)}\n\n`;
+        message += `\nItem ${index + 1}: ${pedido.tamanho} (Bolo Vulcão) - R$ ${pedido.preco.toFixed(2)}\n`;
         return; // Finaliza o loop para Bolo, pois não tem toppings
     } else {
         // Shake, Sobremesa e Combo recebem apenas o título (sem prefixo 'Açaí')
-        message += `Item ${index + 1}: ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n\n`;
+        message += `\nItem ${index + 1}: ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
     }
     
     // 2. DETALHES/TOPPINGS (SÓ PARA AÇAÍ E OBSERVAÇÕES DE OUTROS)
     if (isAcai) {
-        if (pedido.creme) message += `   ▪️ Creme: ${pedido.creme}\n`;
-        if (pedido.frutas.length > 0) message += `   ▪️ Frutas: ${pedido.frutas.join(', ')}\n`;
-        if (pedido.complementos.length > 0) message += `   ▪️ Complementos: ${pedido.complementos.join(', ')}\n`;
-        if (pedido.adicionais.length > 0) message += `   ▪️ Adicionais: ${pedido.adicionais.join(', ')}\n`;
-        if (pedido.caldas) message += `   ▪️ Calda: ${pedido.caldas}\n`;
+        if (pedido.creme) message += `   -Creme: ${pedido.creme}\n`;
+        if (pedido.frutas.length > 0) message += `   -Frutas: ${pedido.frutas.join(', ')}\n`;
+        if (pedido.complementos.length > 0) message += `   -Complementos: ${pedido.complementos.join(', ')}\n`;
+        if (pedido.adicionais.length > 0) message += `   -Adicionais: ${pedido.adicionais.join(', ')}\n`;
+        if (pedido.caldas) message += `   -Calda: ${pedido.caldas}\n`;
     }
 
     if (pedido.observacoes) {
-      message += `   ▪️ Detalhes: ${pedido.observacoes}\n`;
+      message += `   -Detalhes: ${pedido.observacoes}\n`;
     }
       // ---------------------------------
   });
