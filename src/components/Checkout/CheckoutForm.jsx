@@ -1,3 +1,4 @@
+// src/components/Checkout/CheckoutForm.jsx
 import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
 import html2canvas from 'html2canvas';
@@ -15,23 +16,46 @@ const sendWhatsAppMessage = ({
   pagamento,
   downloadLink
 }) => {
-  let message = `*NOVO PEDIDO - AÇAÍ DO WAGÃO*\n\n`;
-  message += `*Cliente:* ${nome}\n`;
-  message += `*Telefone:* ${telefone}\n`;
-  message += `*Endereço:* ${endereco}\n`;
-  message += `*Forma de Pagamento:* ${pagamento}\n`;
+  let message = `🍇 NOVO PEDIDO - AÇAÍ DO WAGÃO 🍇\n\n`;
+  message += `Cliente: ${nome}\n`;
+  message += `Telefone: ${telefone}\n`;
+  message += `Endereço: ${endereco}\n`;
+  message += `Forma de Pagamento: ${pagamento}\n`;
   if (observacao) {
     message += `*Observações:* ${observacao}\n`;
   }
   message += `\n*ITENS:*\n`;
 
   pedidos.forEach((pedido, index) => {
-    message += `\n*Item ${index + 1}:* Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
-    if (pedido.creme) message += `  - Creme: ${pedido.creme}\n`;
-    if (pedido.frutas.length > 0) message += `  - Frutas: ${pedido.frutas.join(', ')}\n`;
-    if (pedido.complementos.length > 0) message += `  - Complementos: ${pedido.complementos.join(', ')}\n`;
-    if (pedido.adicionais.length > 0) message += `  - Adicionais: ${pedido.adicionais.join(', ')}\n`;
-    if (pedido.caldas) message += `  - Calda: ${pedido.caldas}\n`;
+    const isAcai = pedido.tipoProduto === 'Açaí';
+    const isBolo = pedido.tipoProduto === 'Bolo';
+
+    // 1. LINHA PRINCIPAL: Define o prefixo e o item
+    if (isAcai) {
+        // Açaí recebe o prefixo "Açaí"
+        message += `Item ${index + 1}: Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
+    } else if (isBolo) {
+        // Bolo recebe o subtítulo (para diferenciar do item simples)
+        message += `Item ${index + 1}: ${pedido.tamanho} (Bolo Vulcão) - R$ ${pedido.preco.toFixed(2)}\n\n`;
+        return; // Finaliza o loop para Bolo, pois não tem toppings
+    } else {
+        // Shake, Sobremesa e Combo recebem apenas o título (sem prefixo 'Açaí')
+        message += `Item ${index + 1}: ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
+    }
+    
+    // 2. DETALHES/TOPPINGS (SÓ PARA AÇAÍ E OBSERVAÇÕES DE OUTROS)
+    if (isAcai) {
+        if (pedido.creme) message += `   ▪️ Creme: ${pedido.creme}\n`;
+        if (pedido.frutas.length > 0) message += `   ▪️ Frutas: ${pedido.frutas.join(', ')}\n`;
+        if (pedido.complementos.length > 0) message += `   ▪️ Complementos: ${pedido.complementos.join(', ')}\n`;
+        if (pedido.adicionais.length > 0) message += `   ▪️ Adicionais: ${pedido.adicionais.join(', ')}\n`;
+        if (pedido.caldas) message += `   ▪️ Calda: ${pedido.caldas}\n`;
+    }
+
+    if (pedido.observacoes) {
+      message += `   ▪️ Detalhes: ${pedido.observacoes}\n`;
+    }
+      // ---------------------------------
   });
 
   message += `\n*Subtotal:* R$ ${totalPrice.toFixed(2)}\n`;
@@ -40,7 +64,7 @@ const sendWhatsAppMessage = ({
   message += `\n*Comprovante para impressão:* ${downloadLink}\n`;
   message += `\n*ATENÇÃO:* Clique em ENVIAR no WhatsApp para finalizar seu pedido!`;
 
-  const whatsappUrl = `https://wa.me/5561991672740?text=${encodeURIComponent(message)}`; //5561991672740
+  const whatsappUrl = `https://wa.me/5561990449507?text=${encodeURIComponent(message)}`; //5561991672740
   window.open(whatsappUrl, '_blank');
 };
 
@@ -169,12 +193,30 @@ export default function CheckoutForm({
           <h3>Seus Pedidos:</h3>
           {pedidos.map((pedido, index) => (
             <PedidoItem key={index}>
-              <p><strong>Açaí {pedido.tamanho}</strong> - R$ {pedido.preco.toFixed(2)}</p>
-              {pedido.creme && <p>Creme: {pedido.creme}</p>}
-              {pedido.frutas.length > 0 && <p>Frutas: {pedido.frutas.join(', ')}</p>}
-              {pedido.complementos.length > 0 && <p>Complementos: {pedido.complementos.join(', ')}</p>}
-              {pedido.adicionais.length > 0 && <p>Adicionais: {pedido.adicionais.join(', ')}</p>}
-              {pedido.caldas && <p>Calda: {pedido.caldas}</p>}
+              {/* Lógica para diferenciar Açaí de Bolo */}
+              {pedido.tipoProduto === 'Bolo' ? (
+                  <>
+                      <p><strong>{pedido.tamanho}</strong> - R$ {pedido.preco.toFixed(2)}</p>
+                      <p style={{ fontSize: '0.8rem', fontStyle: 'italic', color: '#8E44AD' }}>Bolo Vulcão</p>
+                  </>
+              ) : (pedido.tipoProduto === 'Shake' || pedido.tipoProduto === 'Combo' || pedido.tipoProduto === 'Sobremesa') ? (
+                <>
+                    <p><strong>{pedido.tamanho}</strong> - R$ {pedido.preco.toFixed(2)}</p>
+                    {pedido.observacoes && (
+                        <p style={{ fontSize: '0.8rem', color: '#555' }}>Detalhes: {pedido.observacoes}</p>
+                    )}
+                </>
+
+              ) : 
+              <>
+                  <p><strong>Açaí {pedido.tamanho}</strong> - R$ {pedido.preco.toFixed(2)}</p>
+                  {pedido.creme && <p>Creme: {pedido.creme}</p>}
+                  {pedido.frutas.length > 0 && <p>Frutas: {pedido.frutas.join(', ')}</p>}
+                  {pedido.complementos.length > 0 && <p>Complementos: {pedido.complementos.join(', ')}</p>}
+                  {pedido.adicionais.length > 0 && <p>Adicionais: {pedido.adicionais.join(', ')}</p>}
+                  {pedido.caldas && <p>Calda: {pedido.caldas}</p>}
+              </>
+              }
             </PedidoItem>
           ))}
           <TotalContainer>
@@ -312,13 +354,29 @@ export default function CheckoutForm({
               <h4>ITENS:</h4>
               {pedidos.map((pedido, index) => (
                 <Item key={index}>
-                  <p><strong>{index + 1}. Açaí {pedido.tamanho}</strong></p>
-                  {pedido.creme && <p>- Creme: {pedido.creme}</p>}
-                  {pedido.complementos.length > 0 && <p>- Complementos: {pedido.complementos.join(', ')}</p>}
-                  {pedido.adicionais.length > 0 && <p>- Adicionais: {pedido.adicionais.join(', ')}</p>}
-                  {pedido.frutas.length > 0 && <p>- Frutas: {pedido.frutas.join(', ')}</p>}
-                  {pedido.caldas && <p>- Calda: {pedido.caldas}</p>}
-                  <p><strong>Valor:</strong> R$ {pedido.preco.toFixed(2)}</p>
+                    {pedido.tipoProduto === 'Bolo' ? (
+                        <>
+                            <p><strong>{pedido.tamanho}</strong> - R$ {pedido.preco.toFixed(2)}</p>
+                            <p style={{ fontSize: '0.8rem', fontStyle: 'italic', color: '#8E44AD' }}>Bolo Vulcão</p>
+                        </>
+                      ) : (pedido.tipoProduto === 'Shake' || pedido.tipoProduto === 'Combo' || pedido.tipoProduto === 'Sobremesa') ? (
+                        <>
+                            <p><strong>{pedido.tamanho}</strong> - R$ {pedido.preco.toFixed(2)}</p>
+                            {pedido.observacoes && (
+                                <p style={{ fontSize: '0.8rem', color: '#555' }}>Detalhes: {pedido.observacoes}</p>
+                            )}
+                        </>
+
+                      ) : 
+                      <>
+                          <p><strong>Açaí {pedido.tamanho}</strong> - R$ {pedido.preco.toFixed(2)}</p>
+                          {pedido.creme && <p>Creme: {pedido.creme}</p>}
+                          {pedido.frutas.length > 0 && <p>Frutas: {pedido.frutas.join(', ')}</p>}
+                          {pedido.complementos.length > 0 && <p>Complementos: {pedido.complementos.join(', ')}</p>}
+                          {pedido.adicionais.length > 0 && <p>Adicionais: {pedido.adicionais.join(', ')}</p>}
+                          {pedido.caldas && <p>Calda: {pedido.caldas}</p>}
+                      </>
+                    }
                 </Item>
               ))}
             </Itens>
@@ -341,7 +399,7 @@ export default function CheckoutForm({
   );
 }
 
-// Estilos dos componentes
+// Estilos dos componentes (MANTIDOS)
 const CheckoutOverlay = styled.div`
   position: fixed;
   top: 0;
