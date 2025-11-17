@@ -26,14 +26,14 @@ export const sendWhatsAppMessage = ({
     // 1. LINHA PRINCIPAL: Define o prefixo e o item
     if (isAcai) {
         // Açaí recebe o prefixo "Açaí"
-        message += `Item ${index + 1}: Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
+        message += `Item ${index + 1}: Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n\n`;
     } else if (isBolo) {
         // Bolo recebe o subtítulo (para diferenciar do item simples)
         message += `Item ${index + 1}: ${pedido.tamanho} (Bolo Vulcão) - R$ ${pedido.preco.toFixed(2)}\n\n`;
         return; // Finaliza o loop para Bolo, pois não tem toppings
     } else {
         // Shake, Sobremesa e Combo recebem apenas o título (sem prefixo 'Açaí')
-        message += `Item ${index + 1}: ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
+        message += `Item ${index + 1}: ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n\n`;
     }
     
     // 2. DETALHES/TOPPINGS (SÓ PARA AÇAÍ E OBSERVAÇÕES DE OUTROS)
