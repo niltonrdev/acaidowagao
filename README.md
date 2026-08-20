@@ -1,3 +1,5 @@
-# Açai do Wagão
+# Açaí do Wagão
 
-Programa para realizar pedido de açai e enviar dados para whatsapp.
+Pedido de açaí online + painel da loja.
+
+Veja o guia completo em [SETUP.md](./SETUP.md).

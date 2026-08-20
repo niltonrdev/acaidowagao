@@ -2,81 +2,17 @@
 import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
 import html2canvas from 'html2canvas';
-import { doc, setDoc } from 'firebase/firestore'; // Importa setDoc para uso direto aqui
-
-// Função para enviar mensagem via WhatsApp (adaptada para o novo fluxo)
-const sendWhatsAppMessage = ({
-  pedidos,
-  totalPrice,
-  nome,
-  telefone,
-  endereco,
-  observacao,
-  frete,
-  pagamento,
-  downloadLink
-}) => {
-  let message = `🍇 NOVO PEDIDO - AÇAÍ DO WAGÃO 🍇\n\n`;
-  message += `Cliente: ${nome}\n`;
-  message += `Telefone: ${telefone}\n`;
-  message += `Endereço: ${endereco}\n`;
-  message += `Forma de Pagamento: ${pagamento}\n`;
-  if (observacao) {
-    message += `*Observações:* ${observacao}\n`;
-  }
-  message += `\n*ITENS:*\n`;
-
-  pedidos.forEach((pedido, index) => {
-    const isAcai = pedido.tipoProduto === 'Açaí';
-    const isBolo = pedido.tipoProduto === 'Bolo';
-
-    // 1. LINHA PRINCIPAL: Define o prefixo e o item
-    if (isAcai) {
-        // Açaí recebe o prefixo "Açaí"
-        message += `\nItem ${index + 1}: Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
-    } else if (isBolo) {
-        // Bolo recebe o subtítulo (para diferenciar do item simples)
-        message += `\nItem ${index + 1}: ${pedido.tamanho} (Bolo Vulcão) - R$ ${pedido.preco.toFixed(2)}\n`;
-        return; // Finaliza o loop para Bolo, pois não tem toppings
-    } else {
-        // Shake, Sobremesa e Combo recebem apenas o título (sem prefixo 'Açaí')
-        message += `\nItem ${index + 1}: ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
-    }
-    
-    // 2. DETALHES/TOPPINGS (SÓ PARA AÇAÍ E OBSERVAÇÕES DE OUTROS)
-    if (isAcai) {
-        if (pedido.creme) message += `   -Creme: ${pedido.creme}\n`;
-        if (pedido.frutas.length > 0) message += `   -Frutas: ${pedido.frutas.join(', ')}\n`;
-        if (pedido.complementos.length > 0) message += `   -Complementos: ${pedido.complementos.join(', ')}\n`;
-        if (pedido.adicionais.length > 0) message += `   -Adicionais: ${pedido.adicionais.join(', ')}\n`;
-        if (pedido.caldas) message += `   -Calda: ${pedido.caldas}\n`;
-    }
-
-    if (pedido.observacoes) {
-      message += `   -Detalhes: ${pedido.observacoes}\n`;
-    }
-      // ---------------------------------
-  });
-
-  message += `\n*Subtotal:* R$ ${totalPrice.toFixed(2)}\n`;
-  message += `*Frete:* R$ ${frete.toFixed(2)}\n`;
-  message += `*TOTAL A PAGAR:* R$ ${(totalPrice + frete).toFixed(2)}\n`;
-  message += `\n*Comprovante para impressão:* ${downloadLink}\n`;
-  message += `\n*ATENÇÃO:* Clique em ENVIAR no WhatsApp para finalizar seu pedido!`;
-
-  const whatsappUrl = `https://wa.me/5561991672740?text=${encodeURIComponent(message)}`; //5561991672740
-  window.open(whatsappUrl, '_blank');
-};
-
+import { doc, setDoc } from 'firebase/firestore';
+import { createOrder } from '../../services/ordersService';
 
 export default function CheckoutForm({
   pedidos,
   totalPrice,
   onConfirm,
   onBack,
-  db, // Recebe o db do App.jsx
-  userId, // Recebe o userId do App.jsx
-  appId // Recebe o appId do App.jsx
+  db,
+  userId,
+  appId
 }) {
   const [cliente, setCliente] = useState({
     nome: '',
@@ -87,6 +23,7 @@ export default function CheckoutForm({
   const [pagamento, setPagamento] = useState('');
   const [frete, setFrete] = useState(0);
   const [regiao, setRegiao] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const regioes = [
     { nome: "QNG, QND, CNG, CND", valor: 3 },
     { nome: "QNE, QNH, QNF, QI", valor: 4 },
@@ -115,7 +52,6 @@ export default function CheckoutForm({
         useCORS: true,
       });
       const dataUrl = canvas.toDataURL('image/png');
-      console.log("Comprovante gerado. Tamanho da URL:", dataUrl.length);
       return dataUrl;
     } catch (error) {
       console.error("Erro ao gerar comprovante com html2canvas:", error);
@@ -125,62 +61,54 @@ export default function CheckoutForm({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
 
-    if (!db || !userId) {
-        console.error("Firestore não inicializado ou usuário não autenticado. Não é possível salvar o comprovante.");
-        console.log("Erro: Conexão com o banco de dados não estabelecida. Por favor, tente novamente.");
-        return;
-    }
-
-    const timestamp = new Date().getTime();
-    const downloadLink = `${window.location.origin}/download?download=${timestamp}`;
-
-    // 1. Tenta enviar a mensagem do WhatsApp imediatamente
-    sendWhatsAppMessage({
-        pedidos,
-        totalPrice,
+    try {
+      const order = await createOrder({
         nome: cliente.nome,
         telefone: cliente.telefone,
         endereco: cliente.endereco,
         observacao: cliente.observacao,
+        regiao,
         frete,
         pagamento,
-        downloadLink // Passa o link do Firestore que será salvo
-    });
+        pedidos,
+        totalPrice,
+      });
 
-    // 2. Em segundo plano, gera o comprovante e salva no Firestore
-    try {
+      // Comprovante opcional no Firebase (fluxo antigo do site)
+      try {
         const imageUrl = await gerarComprovante();
-
-        if (!imageUrl || imageUrl.length < 100) {
-            console.warn("A URL da imagem do comprovante está vazia ou inválida. O pedido foi enviado, mas o comprovante pode não estar disponível para download.");
-            // Você pode adicionar um feedback visual não-bloqueante aqui, se desejar
-        } else {
-            const comprovanteDocRef = doc(db, `artifacts/${appId}/public/data/comprovantes/${timestamp}`);
-            await setDoc(comprovanteDocRef, {
-                imageUrl: imageUrl,
-                timestamp: timestamp,
-                userId: userId,
-                cliente: cliente,
-                pedidos: pedidos,
-                totalPrice: totalPrice,
-                frete: frete,
-                pagamento: pagamento,
-                regiao: regiao,
-                createdAt: new Date().toISOString()
-            });
-            console.log("Comprovante salvo no Firestore com ID:", timestamp);
+        if (db && userId && imageUrl) {
+          const timestamp = Date.now();
+          const comprovanteDocRef = doc(
+            db,
+            `artifacts/${appId}/public/data/comprovantes/${timestamp}`
+          );
+          await setDoc(comprovanteDocRef, {
+            imageUrl,
+            timestamp,
+            userId,
+            cliente,
+            pedidos,
+            totalPrice,
+            frete,
+            pagamento,
+            regiao,
+            orderCode: order.code,
+            createdAt: new Date().toISOString(),
+          });
         }
+      } catch (err) {
+        console.warn('Comprovante Firebase opcional falhou:', err);
+      }
 
-        // 3. Confirma o checkout e reseta o pedido após as operações (ou após a tentativa)
-        setTimeout(() => {
-            onConfirm();
-        }, 1500);
-
+      onConfirm(order);
     } catch (error) {
-        console.error("Erro ao processar pedido e/ou salvar comprovante:", error);
-        // Substituído alert() por console.log para evitar bloqueio em mobile
-        console.log("Ocorreu um erro ao finalizar o pedido. Por favor, tente novamente.");
+      console.error('Erro ao processar pedido:', error);
+      alert('Não foi possível enviar o pedido. Tente novamente.');
+      setSubmitting(false);
     }
   };
 
@@ -327,8 +255,8 @@ export default function CheckoutForm({
             <BackButton type="button" onClick={onBack}>
               Voltar
             </BackButton>
-            <ConfirmButton type="submit">
-              Enviar Pedido
+            <ConfirmButton type="submit" disabled={submitting}>
+              {submitting ? 'Enviando...' : 'Finalizar Pedido'}
             </ConfirmButton>
           </ButtonGroup>
         </Form>
@@ -507,7 +435,13 @@ const ConfirmButton = styled.button`
   cursor: pointer;
   transition: all 0.3s;
 
-  &:hover {
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  &:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 5px 10px rgba(106, 48, 147, 0.3);
   }

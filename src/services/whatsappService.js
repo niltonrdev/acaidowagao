@@ -1,73 +1,65 @@
-// src/services/whatsappService.js
-export const sendWhatsAppMessage = ({ 
-  pedidos, 
-  totalPrice, 
-  nome, 
-  telefone, 
-  endereco, 
-  observacao, 
-  frete,
-  pagamento,
-  imageUrl,
-  timestamp
-}) => {
-  let message = `🍇 NOVO PEDIDO - AÇAÍ DO WAGÃO 🍇\n\n`;
-  message += `Cliente: ${nome}\n`;
-  message += `Telefone: ${telefone}\n`;
-  message += `Endereço: ${endereco}\n`;
-  message += `Forma de Pagamento: ${pagamento}\n`;
-  if (observacao) message += `📝 Observações: ${observacao}\n\n`;
-  
-  message += `🛒 ITENS:\n\n`;
-  pedidos.forEach((pedido, index) => {
-    const isAcai = pedido.tipoProduto === 'Açaí';
-    const isBolo = pedido.tipoProduto === 'Bolo';
+import {
+  STORE_WHATSAPP,
+  STATUS_WHATSAPP_MESSAGES,
+  getPixWhatsAppMessage,
+} from '../config';
 
-    // 1. LINHA PRINCIPAL: Define o prefixo e o item
-    if (isAcai) {
-        // Açaí recebe o prefixo "Açaí"
-        message += `\nItem ${index + 1}: Açaí ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
-    } else if (isBolo) {
-        // Bolo recebe o subtítulo (para diferenciar do item simples)
-        message += `\nItem ${index + 1}: ${pedido.tamanho} (Bolo Vulcão) - R$ ${pedido.preco.toFixed(2)}\n`;
-        return; // Finaliza o loop para Bolo, pois não tem toppings
-    } else {
-        // Shake, Sobremesa e Combo recebem apenas o título (sem prefixo 'Açaí')
-        message += `\nItem ${index + 1}: ${pedido.tamanho} - R$ ${pedido.preco.toFixed(2)}\n`;
-    }
-    
-    // 2. DETALHES/TOPPINGS (SÓ PARA AÇAÍ E OBSERVAÇÕES DE OUTROS)
-    if (isAcai) {
-        if (pedido.creme) message += `   -Creme: ${pedido.creme}\n`;
-        if (pedido.frutas.length > 0) message += `   -Frutas: ${pedido.frutas.join(', ')}\n`;
-        if (pedido.complementos.length > 0) message += `   -Complementos: ${pedido.complementos.join(', ')}\n`;
-        if (pedido.adicionais.length > 0) message += `   -Adicionais: ${pedido.adicionais.join(', ')}\n`;
-        if (pedido.caldas) message += `   -Calda: ${pedido.caldas}\n`;
-    }
-    
-    if (pedido.observacoes) {
-      message += `   -Detalhes: ${pedido.observacoes}\n`;
-    }
-      // ---------------------------------
-  });
-  
-  message += `Subtotal: R$ ${totalPrice.toFixed(2)}\n`;
-  message += `Frete: R$ ${frete.toFixed(2)}\n`;
-  message += `TOTAL A PAGAR: R$ ${(totalPrice + frete).toFixed(2)}\n\n`;
-  message += `⏱️ Tempo de preparo: 20-30 minutos\n\n`;
+function onlyDigits(value) {
+  return String(value || '').replace(/\D/g, '');
+}
 
-  // Adiciona link para download se houver imagem
-  if (imageUrl && timestamp) {
-    const cleanUrl = window.location.origin + window.location.pathname;
-    message += `📎 Comprovante para impressão: ${cleanUrl}?download=${timestamp}\n\n`;
-  }
+export function normalizePhone(phone) {
+  let digits = onlyDigits(phone);
+  if (digits.length === 11) digits = `55${digits}`;
+  if (digits.length === 10) digits = `55${digits}`;
+  return digits;
+}
 
-  message += `⚠️ *ATENÇÃO:* Clique em ENVIAR no WhatsApp para finalizar seu pedido!\n\n`;
-
-  // Abre o WhatsApp 991672740
+function openWhatsApp(phone, text) {
+  const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
   if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    window.location.href = `https://wa.me/5561991672740?text=${encodeURIComponent(message)}`;
+    window.location.href = url;
   } else {
-    window.open(`https://wa.me/5561991672740?text=${encodeURIComponent(message)}`, '_blank');
+    window.open(url, '_blank');
   }
-};
+}
+
+/** Cliente acompanha o pedido abrindo a conversa com a loja */
+export function openTrackOrderWhatsApp(code) {
+  openWhatsApp(STORE_WHATSAPP, `PEDIDO ${code}`);
+}
+
+/** Cliente recebe a chave PIX (abre conversa com a loja já com o texto) */
+export function openPixWhatsApp(code, total) {
+  openWhatsApp(STORE_WHATSAPP, getPixWhatsAppMessage(code, total));
+}
+
+/**
+ * Abre WhatsApp do cliente só para status que disparam mensagem
+ * (em preparo / saiu para entrega).
+ */
+export function openStatusToCustomer(customerPhone, code, status) {
+  const build = STATUS_WHATSAPP_MESSAGES[status];
+  if (!build) return;
+
+  const phone = normalizePhone(customerPhone);
+  if (!phone) {
+    alert('Telefone do cliente inválido.');
+    return;
+  }
+
+  openWhatsApp(phone, build(code));
+}
+
+/** Pedir localização ao cliente */
+export function openLocationRequest(customerPhone, code) {
+  const phone = normalizePhone(customerPhone);
+  if (!phone) {
+    alert('Telefone do cliente inválido.');
+    return;
+  }
+  openWhatsApp(
+    phone,
+    `🍇 *Açaí do Wagão*\nPara o *PEDIDO ${code}*, pode nos enviar sua localização neste chat? 📍`
+  );
+}
