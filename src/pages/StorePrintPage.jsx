@@ -49,15 +49,22 @@ function buildTicketHtml(order) {
       background: #fff;
       color: #000;
       font-family: "Courier New", Courier, monospace;
+      font-weight: 700;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .ticket, .ticket * {
+      font-weight: 700 !important;
+      color: #000 !important;
     }
     .ticket {
-      width: 280px;
+      width: 260px;
       max-width: 100%;
-      padding: 8px;
+      padding: 6px 4px;
       margin: 0 auto;
     }
     h1 { margin: 0; font-size: 16px; text-align: center; }
-    .pedido { margin: 8px 0 4px; font-size: 20px; font-weight: 700; text-align: center; }
+    .pedido { margin: 8px 0 4px; font-size: 20px; text-align: center; }
     .meta { margin: 4px 0; font-size: 13px; text-align: center; }
     .section { margin: 12px 0; }
     .section h2 {
@@ -74,9 +81,9 @@ function buildTicketHtml(order) {
     .grand { font-size: 16px; margin-top: 6px; }
     .footer { text-align: center; margin-top: 14px; font-size: 12px; }
     @media print {
-      @page { margin: 4mm; size: auto; }
+      @page { margin: 2mm; size: auto; }
       html, body { width: auto; }
-      .ticket { width: 72mm; margin: 0; padding: 0; }
+      .ticket { width: 68mm; margin: 0; padding: 0; }
     }
   </style>
 </head>
@@ -365,6 +372,12 @@ const Ticket = styled.div`
   color: #000;
   width: 288px;
   padding: 8px;
+  font-weight: 700;
+
+  * {
+    font-weight: 700 !important;
+    color: #000 !important;
+  }
 `;
 
 const Header = styled.div`
@@ -380,7 +393,6 @@ const Header = styled.div`
 
   .pedido {
     font-size: 1.35rem;
-    font-weight: 700;
     margin: 8px 0 4px;
   }
 
@@ -412,10 +424,6 @@ const Item = styled.div`
   margin-bottom: 10px;
   padding-bottom: 8px;
   border-bottom: 1px dotted #666;
-
-  .item-price {
-    font-weight: 700;
-  }
 `;
 
 const Totals = styled.div`
