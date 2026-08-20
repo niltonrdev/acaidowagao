@@ -12,9 +12,9 @@ export const ORDER_STATUSES = [
 
 export const STATUS_WHATSAPP_MESSAGES = {
   preparo: (code) =>
-    `🍇 *Açaí do Wagão*\nSeu *PEDIDO ${code}* está sendo preparado! 👨‍🍳`,
+    `*Açaí do Wagão*\nSeu *PEDIDO ${code}* está sendo preparado com todo carinho!`,
   saiu: (code) =>
-    `🍇 *Açaí do Wagão*\nSeu *PEDIDO ${code}* saiu para entrega! 🛵`,
+    `*Açaí do Wagão*\nSeu *PEDIDO ${code}* saiu para entrega!`,
 };
 
 /** Status que abrem WhatsApp ao clicar no painel */
@@ -25,7 +25,7 @@ export function getPixWhatsAppMessage(code, total) {
     ? `Chave PIX: *${PIX_KEY}*\nNome: ${PIX_NAME}\n`
     : 'A chave PIX será enviada em seguida.\n';
   return (
-    `🍇 *Açaí do Wagão* — *PEDIDO ${code}*\n` +
+    `*Açaí do Wagão* — *PEDIDO ${code}*\n` +
     `Pagamento via PIX\n` +
     `Valor: *R$ ${Number(total).toFixed(2)}*\n\n` +
     keyLine +

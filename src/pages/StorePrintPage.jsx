@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import styled, { createGlobalStyle } from 'styled-components';
+import html2canvas from 'html2canvas';
 import { getOrderById } from '../services/ordersService';
 import { isStoreLoggedIn } from '../services/storeAuth';
 
@@ -8,6 +9,8 @@ export default function StorePrintPage() {
   const { id } = useParams();
   const [order, setOrder] = useState(null);
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const ticketRef = useRef(null);
   const loggedIn = isStoreLoggedIn();
 
   useEffect(() => {
@@ -34,9 +37,31 @@ export default function StorePrintPage() {
 
   useEffect(() => {
     if (!order) return undefined;
-    const timer = setTimeout(() => window.print(), 500);
+    const timer = setTimeout(() => window.print(), 800);
     return () => clearTimeout(timer);
   }, [order]);
+
+  const handleSaveComprovante = async () => {
+    if (!ticketRef.current || !order || saving) return;
+    setSaving(true);
+    try {
+      const canvas = await html2canvas(ticketRef.current, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        logging: false,
+        useCORS: true,
+      });
+      const link = document.createElement('a');
+      link.download = `pedido-${order.code}-acai-do-wagao.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível salvar o comprovante. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!loggedIn) {
     const next = encodeURIComponent(`/loja/imprimir/${id}`);
@@ -49,17 +74,28 @@ export default function StorePrintPage() {
   return (
     <>
       <PrintStyles />
-      <Wrap>
+      <Wrap id="print-root">
         <Toolbar className="no-print">
           <button type="button" onClick={() => window.print()}>
             Imprimir novamente
           </button>
+          <SaveButton
+            type="button"
+            onClick={handleSaveComprovante}
+            disabled={saving}
+          >
+            {saving ? 'Salvando...' : 'Salvar Comprovante'}
+          </SaveButton>
           <button type="button" onClick={() => window.close()}>
             Fechar
           </button>
+          <Hint>
+            Se aparecer &quot;0 folhas&quot;, em Mais configurações escolha tamanho
+            de papel A4 ou 80mm e marque &quot;Gráficos de segundo plano&quot;.
+          </Hint>
         </Toolbar>
 
-        <Ticket>
+        <Ticket ref={ticketRef}>
           <Header>
             <h1>AÇAÍ DO WAGÃO</h1>
             <p className="pedido">PEDIDO {order.code}</p>
@@ -143,22 +179,40 @@ export default function StorePrintPage() {
 const PrintStyles = createGlobalStyle`
   @media print {
     @page {
-      size: 80mm auto;
-      margin: 4mm;
+      margin: 5mm;
     }
 
     html, body {
       background: #fff !important;
       margin: 0 !important;
       padding: 0 !important;
+      width: 100% !important;
+      height: auto !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
-    body * {
-      visibility: hidden;
+    body {
+      overflow: visible !important;
     }
 
-    #root, #root * {
-      visibility: visible;
+    #root {
+      display: block !important;
+      width: 100% !important;
+    }
+
+    .no-print {
+      display: none !important;
+    }
+
+    #print-root {
+      display: block !important;
+      width: 72mm !important;
+      max-width: 72mm !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      color: #000 !important;
+      background: #fff !important;
     }
   }
 `;
@@ -170,17 +224,14 @@ const Wrap = styled.div`
   margin: 0 auto;
   color: #000;
   background: #fff;
-
-  @media print {
-    padding: 0;
-    max-width: 100%;
-  }
 `;
 
 const Toolbar = styled.div`
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 16px;
+  align-items: center;
 
   button {
     padding: 10px 14px;
@@ -191,14 +242,31 @@ const Toolbar = styled.div`
     border: 1px solid #ccc;
     background: #f5f5f5;
   }
+`;
 
-  @media print {
-    display: none !important;
+const SaveButton = styled.button`
+  background: #6a3093 !important;
+  color: #fff !important;
+  border-color: #6a3093 !important;
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
   }
+`;
+
+const Hint = styled.p`
+  flex-basis: 100%;
+  margin: 4px 0 0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.8rem;
+  color: #666;
 `;
 
 const Ticket = styled.div`
   background: #fff;
+  color: #000;
+  padding: 8px;
 `;
 
 const Header = styled.div`
