@@ -60,6 +60,6 @@ export function openLocationRequest(customerPhone, code) {
   }
   openWhatsApp(
     phone,
-    `🍇 *Açaí do Wagão*\nPara o *PEDIDO ${code}*, pode nos enviar sua localização neste chat? 📍`
+    `*Açaí do Wagão*\nPara o *PEDIDO ${code}*, pode nos enviar sua localização neste chat?`
   );
 }
