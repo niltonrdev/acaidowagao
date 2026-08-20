@@ -1,9 +1,147 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
-import styled, { createGlobalStyle } from 'styled-components';
+import styled from 'styled-components';
 import html2canvas from 'html2canvas';
 import { getOrderById } from '../services/ordersService';
 import { isStoreLoggedIn } from '../services/storeAuth';
+
+function buildTicketHtml(order) {
+  const itemsHtml = (order.items || [])
+    .map((item, index) => {
+      const tipo = item.tipoProduto || 'Açaí';
+      const isAcai = tipo === 'Açaí';
+      const title = isAcai
+        ? `Açaí ${item.tamanho}`
+        : `${item.tamanho}${tipo === 'Bolo' ? ' (Bolo Vulcão)' : ''}`;
+
+      const lines = [];
+      if (isAcai && item.creme) lines.push(`- Creme: ${item.creme}`);
+      if (isAcai && item.frutas?.length)
+        lines.push(`- Frutas: ${item.frutas.join(', ')}`);
+      if (isAcai && item.complementos?.length)
+        lines.push(`- Complementos: ${item.complementos.join(', ')}`);
+      if (isAcai && item.adicionais?.length)
+        lines.push(`- Adicionais: ${item.adicionais.join(', ')}`);
+      if (isAcai && item.caldas) lines.push(`- Calda: ${item.caldas}`);
+      if (item.observacoes) lines.push(`- Detalhes: ${item.observacoes}`);
+
+      return `
+        <div class="item">
+          <p><strong>${index + 1}. ${escapeHtml(title)}</strong></p>
+          <p>R$ ${Number(item.preco).toFixed(2)}</p>
+          ${lines.map((l) => `<p>${escapeHtml(l)}</p>`).join('')}
+        </div>`;
+    })
+    .join('');
+
+  const when = new Date(order.created_at).toLocaleString('pt-BR');
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>PEDIDO ${escapeHtml(order.code)}</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      color: #000;
+      font-family: "Courier New", Courier, monospace;
+    }
+    .ticket {
+      width: 280px;
+      max-width: 100%;
+      padding: 8px;
+      margin: 0 auto;
+    }
+    h1 { margin: 0; font-size: 16px; text-align: center; }
+    .pedido { margin: 8px 0 4px; font-size: 20px; font-weight: 700; text-align: center; }
+    .meta { margin: 4px 0; font-size: 13px; text-align: center; }
+    .section { margin: 12px 0; }
+    .section h2 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      border-bottom: 1px solid #000;
+      padding-bottom: 4px;
+    }
+    .section p { margin: 3px 0; font-size: 13px; line-height: 1.3; word-break: break-word; }
+    .divider { border: none; border-top: 2px dashed #000; margin: 10px 0; }
+    .item { margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px dotted #666; }
+    .totals { text-align: right; }
+    .totals p { margin: 3px 0; font-size: 13px; }
+    .grand { font-size: 16px; margin-top: 6px; }
+    .footer { text-align: center; margin-top: 14px; font-size: 12px; }
+    @media print {
+      @page { margin: 4mm; size: auto; }
+      html, body { width: auto; }
+      .ticket { width: 72mm; margin: 0; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ticket">
+    <h1>AÇAÍ DO WAGÃO</h1>
+    <p class="pedido">PEDIDO ${escapeHtml(String(order.code))}</p>
+    <p class="meta">${escapeHtml(when)}</p>
+    <hr class="divider" />
+    <div class="section">
+      <p><strong>Cliente:</strong> ${escapeHtml(order.customer_name)}</p>
+      <p><strong>Telefone:</strong> ${escapeHtml(order.customer_phone)}</p>
+      <p><strong>Endereço:</strong> ${escapeHtml(order.address)}</p>
+      ${
+        order.region
+          ? `<p><strong>Região:</strong> ${escapeHtml(order.region)}</p>`
+          : ''
+      }
+      <p><strong>Pagamento:</strong> ${escapeHtml(order.payment_method)}</p>
+      ${
+        order.notes
+          ? `<p><strong>Obs:</strong> ${escapeHtml(order.notes)}</p>`
+          : ''
+      }
+    </div>
+    <div class="section">
+      <h2>ITENS</h2>
+      ${itemsHtml}
+    </div>
+    <hr class="divider" />
+    <div class="totals">
+      <p>Subtotal: R$ ${Number(order.subtotal).toFixed(2)}</p>
+      <p>Frete: R$ ${Number(order.freight).toFixed(2)}</p>
+      <p class="grand"><strong>TOTAL: R$ ${Number(order.total).toFixed(2)}</strong></p>
+    </div>
+    <p class="footer">Obrigado pela preferência!</p>
+  </div>
+  <script>
+    window.onload = function () {
+      setTimeout(function () { window.print(); }, 300);
+    };
+  </script>
+</body>
+</html>`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function openPrintWindow(order) {
+  const html = buildTicketHtml(order);
+  const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=420,height=720');
+  if (!printWindow) {
+    alert('Permita pop-ups para imprimir o pedido.');
+    return;
+  }
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+}
 
 export default function StorePrintPage() {
   const { id } = useParams();
@@ -35,18 +173,15 @@ export default function StorePrintPage() {
     };
   }, [id, loggedIn]);
 
-  useEffect(() => {
-    if (!order) return undefined;
-    const timer = setTimeout(() => window.print(), 800);
-    return () => clearTimeout(timer);
-  }, [order]);
-
   const handleSaveComprovante = async () => {
     if (!ticketRef.current || !order || saving) return;
     setSaving(true);
     try {
+      // ~576px ≈ 72mm em impressora térmica 203dpi (bom para bobina 80mm)
       const canvas = await html2canvas(ticketRef.current, {
         scale: 2,
+        width: 288,
+        windowWidth: 288,
         backgroundColor: '#ffffff',
         logging: false,
         useCORS: true,
@@ -68,170 +203,129 @@ export default function StorePrintPage() {
     return <Navigate to={`/loja/login?next=${next}`} replace />;
   }
 
-  if (error) return <Wrap>{error}</Wrap>;
-  if (!order) return <Wrap>Carregando ticket...</Wrap>;
+  if (error) return <Page>{error}</Page>;
+  if (!order) return <Page>Carregando ticket...</Page>;
 
   return (
-    <>
-      <PrintStyles />
-      <Wrap id="print-root">
-        <Toolbar className="no-print">
-          <button type="button" onClick={() => window.print()}>
-            Imprimir novamente
-          </button>
-          <SaveButton
-            type="button"
-            onClick={handleSaveComprovante}
-            disabled={saving}
-          >
-            {saving ? 'Salvando...' : 'Salvar Comprovante'}
-          </SaveButton>
-          <button type="button" onClick={() => window.close()}>
-            Fechar
-          </button>
-          <Hint>
-            Se aparecer &quot;0 folhas&quot;, em Mais configurações escolha tamanho
-            de papel A4 ou 80mm e marque &quot;Gráficos de segundo plano&quot;.
-          </Hint>
-        </Toolbar>
+    <Page>
+      <Toolbar>
+        <button type="button" onClick={() => openPrintWindow(order)}>
+          Imprimir
+        </button>
+        <SaveButton
+          type="button"
+          onClick={handleSaveComprovante}
+          disabled={saving}
+        >
+          {saving ? 'Salvando...' : 'Salvar Comprovante'}
+        </SaveButton>
+        <button type="button" onClick={() => window.close()}>
+          Fechar
+        </button>
+      </Toolbar>
 
-        <Ticket ref={ticketRef}>
-          <Header>
-            <h1>AÇAÍ DO WAGÃO</h1>
-            <p className="pedido">PEDIDO {order.code}</p>
-            <p>{new Date(order.created_at).toLocaleString('pt-BR')}</p>
-          </Header>
+      <Tip>
+        <strong>Impressora térmica (Perto):</strong> use <em>Imprimir</em> (abre
+        janela limpa). Se preferir o PNG: ao imprimir a imagem, escolha{' '}
+        <em>Tamanho real / Ajustar à largura</em> — evite &quot;Preencher a
+        página&quot;.
+      </Tip>
 
-          <Section>
+      <Ticket ref={ticketRef}>
+        <Header>
+          <h1>AÇAÍ DO WAGÃO</h1>
+          <p className="pedido">PEDIDO {order.code}</p>
+          <p>{new Date(order.created_at).toLocaleString('pt-BR')}</p>
+        </Header>
+
+        <Section>
+          <p>
+            <strong>Cliente:</strong> {order.customer_name}
+          </p>
+          <p>
+            <strong>Telefone:</strong> {order.customer_phone}
+          </p>
+          <p>
+            <strong>Endereço:</strong> {order.address}
+          </p>
+          {order.region && (
             <p>
-              <strong>Cliente:</strong> {order.customer_name}
+              <strong>Região:</strong> {order.region}
             </p>
+          )}
+          <p>
+            <strong>Pagamento:</strong> {order.payment_method}
+          </p>
+          {order.notes && (
             <p>
-              <strong>Telefone:</strong> {order.customer_phone}
+              <strong>Obs:</strong> {order.notes}
             </p>
-            <p>
-              <strong>Endereço:</strong> {order.address}
-            </p>
-            {order.region && (
-              <p>
-                <strong>Região:</strong> {order.region}
-              </p>
-            )}
-            <p>
-              <strong>Pagamento:</strong> {order.payment_method}
-            </p>
-            {order.notes && (
-              <p>
-                <strong>Obs:</strong> {order.notes}
-              </p>
-            )}
-          </Section>
+          )}
+        </Section>
 
-          <Section>
-            <h2>ITENS</h2>
-            {(order.items || []).map((item, index) => {
-              const tipo = item.tipoProduto || 'Açaí';
-              const isAcai = tipo === 'Açaí';
-              return (
-                <Item key={index}>
-                  <p className="item-title">
-                    <strong>
-                      {index + 1}.{' '}
-                      {isAcai ? `Açaí ${item.tamanho}` : item.tamanho}
-                      {!isAcai && tipo === 'Bolo' ? ' (Bolo Vulcão)' : ''}
-                    </strong>
-                  </p>
-                  <p className="item-price">
-                    R$ {Number(item.preco).toFixed(2)}
-                  </p>
-                  {isAcai && item.creme && <p>- Creme: {item.creme}</p>}
-                  {isAcai && item.frutas?.length > 0 && (
-                    <p>- Frutas: {item.frutas.join(', ')}</p>
-                  )}
-                  {isAcai && item.complementos?.length > 0 && (
-                    <p>- Complementos: {item.complementos.join(', ')}</p>
-                  )}
-                  {isAcai && item.adicionais?.length > 0 && (
-                    <p>- Adicionais: {item.adicionais.join(', ')}</p>
-                  )}
-                  {isAcai && item.caldas && <p>- Calda: {item.caldas}</p>}
-                  {item.observacoes && <p>- Detalhes: {item.observacoes}</p>}
-                </Item>
-              );
-            })}
-          </Section>
+        <Section>
+          <h2>ITENS</h2>
+          {(order.items || []).map((item, index) => {
+            const tipo = item.tipoProduto || 'Açaí';
+            const isAcai = tipo === 'Açaí';
+            return (
+              <Item key={index}>
+                <p className="item-title">
+                  <strong>
+                    {index + 1}.{' '}
+                    {isAcai ? `Açaí ${item.tamanho}` : item.tamanho}
+                    {!isAcai && tipo === 'Bolo' ? ' (Bolo Vulcão)' : ''}
+                  </strong>
+                </p>
+                <p className="item-price">
+                  R$ {Number(item.preco).toFixed(2)}
+                </p>
+                {isAcai && item.creme && <p>- Creme: {item.creme}</p>}
+                {isAcai && item.frutas?.length > 0 && (
+                  <p>- Frutas: {item.frutas.join(', ')}</p>
+                )}
+                {isAcai && item.complementos?.length > 0 && (
+                  <p>- Complementos: {item.complementos.join(', ')}</p>
+                )}
+                {isAcai && item.adicionais?.length > 0 && (
+                  <p>- Adicionais: {item.adicionais.join(', ')}</p>
+                )}
+                {isAcai && item.caldas && <p>- Calda: {item.caldas}</p>}
+                {item.observacoes && <p>- Detalhes: {item.observacoes}</p>}
+              </Item>
+            );
+          })}
+        </Section>
 
-          <Totals>
-            <p>Subtotal: R$ {Number(order.subtotal).toFixed(2)}</p>
-            <p>Frete: R$ {Number(order.freight).toFixed(2)}</p>
-            <p className="grand">
-              <strong>TOTAL: R$ {Number(order.total).toFixed(2)}</strong>
-            </p>
-          </Totals>
+        <Totals>
+          <p>Subtotal: R$ {Number(order.subtotal).toFixed(2)}</p>
+          <p>Frete: R$ {Number(order.freight).toFixed(2)}</p>
+          <p className="grand">
+            <strong>TOTAL: R$ {Number(order.total).toFixed(2)}</strong>
+          </p>
+        </Totals>
 
-          <FooterNote>Obrigado pela preferência!</FooterNote>
-        </Ticket>
-      </Wrap>
-    </>
+        <FooterNote>Obrigado pela preferência!</FooterNote>
+      </Ticket>
+    </Page>
   );
 }
 
-const PrintStyles = createGlobalStyle`
-  @media print {
-    @page {
-      margin: 5mm;
-    }
-
-    html, body {
-      background: #fff !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      width: 100% !important;
-      height: auto !important;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-
-    body {
-      overflow: visible !important;
-    }
-
-    #root {
-      display: block !important;
-      width: 100% !important;
-    }
-
-    .no-print {
-      display: none !important;
-    }
-
-    #print-root {
-      display: block !important;
-      width: 72mm !important;
-      max-width: 72mm !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      color: #000 !important;
-      background: #fff !important;
-    }
-  }
-`;
-
-const Wrap = styled.div`
+const Page = styled.div`
   font-family: 'Courier New', Courier, monospace;
   padding: 16px;
-  max-width: 320px;
+  max-width: 360px;
   margin: 0 auto;
   color: #000;
   background: #fff;
+  min-height: 100vh;
 `;
 
 const Toolbar = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 16px;
-  align-items: center;
+  margin-bottom: 12px;
 
   button {
     padding: 10px 14px;
@@ -255,17 +349,21 @@ const SaveButton = styled.button`
   }
 `;
 
-const Hint = styled.p`
-  flex-basis: 100%;
-  margin: 4px 0 0;
+const Tip = styled.p`
   font-family: 'Poppins', sans-serif;
-  font-size: 0.8rem;
-  color: #666;
+  font-size: 0.82rem;
+  color: #555;
+  line-height: 1.4;
+  margin: 0 0 16px;
+  background: #f8f5fb;
+  padding: 10px 12px;
+  border-radius: 8px;
 `;
 
 const Ticket = styled.div`
   background: #fff;
   color: #000;
+  width: 288px;
   padding: 8px;
 `;
 
@@ -278,7 +376,6 @@ const Header = styled.div`
   h1 {
     margin: 0;
     font-size: 1.15rem;
-    letter-spacing: 0.5px;
   }
 
   .pedido {
@@ -315,10 +412,6 @@ const Item = styled.div`
   margin-bottom: 10px;
   padding-bottom: 8px;
   border-bottom: 1px dotted #666;
-
-  .item-title {
-    margin-bottom: 2px;
-  }
 
   .item-price {
     font-weight: 700;
