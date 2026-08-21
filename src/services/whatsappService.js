@@ -1,7 +1,8 @@
 import {
   STORE_WHATSAPP,
   STATUS_WHATSAPP_MESSAGES,
-  getPixWhatsAppMessage,
+  PIX_KEY,
+  PIX_NAME,
 } from '../config';
 
 function onlyDigits(value) {
@@ -24,14 +25,102 @@ function openWhatsApp(phone, text) {
   }
 }
 
+function formatItemBlock(item, index) {
+  const tipo = item.tipoProduto || 'Açaí';
+  const isAcai = tipo === 'Açaí';
+  const title = isAcai
+    ? `Açaí ${item.tamanho}`
+    : `${item.tamanho}${tipo === 'Bolo' ? ' (Bolo Vulcão)' : ''}`;
+
+  const lines = [
+    `*${index + 1}. ${title}* — R$ ${Number(item.preco).toFixed(2)}`,
+  ];
+
+  if (isAcai && item.creme) lines.push(`- Creme: ${item.creme}`);
+  if (isAcai && item.frutas?.length)
+    lines.push(`- Frutas: ${item.frutas.join(', ')}`);
+  if (isAcai && item.complementos?.length)
+    lines.push(`- Complementos: ${item.complementos.join(', ')}`);
+  if (isAcai && item.adicionais?.length)
+    lines.push(`- Adicionais: ${item.adicionais.join(', ')}`);
+  if (isAcai && item.caldas) lines.push(`- Calda: ${item.caldas}`);
+  if (item.observacoes) lines.push(`- Detalhes: ${item.observacoes}`);
+
+  return lines.join('\n');
+}
+
+/** Texto completo do pedido para a loja (backup se o painel falhar) */
+export function formatOrderWhatsAppText(order) {
+  if (!order) return '';
+
+  const lines = [
+    `*Açaí do Wagão* — *PEDIDO ${order.code}*`,
+    '',
+    `Cliente: ${order.customer_name || '-'}`,
+    `Telefone: ${order.customer_phone || '-'}`,
+    `Endereço: ${order.address || '-'}`,
+  ];
+
+  if (order.region) lines.push(`Região: ${order.region}`);
+  lines.push(`Pagamento: ${order.payment_method || '-'}`);
+  if (order.notes) lines.push(`Obs: ${order.notes}`);
+
+  lines.push('', '*ITENS*');
+  (order.items || []).forEach((item, index) => {
+    lines.push(formatItemBlock(item, index), '');
+  });
+
+  lines.push(
+    `Subtotal: R$ ${Number(order.subtotal || 0).toFixed(2)}`,
+    `Frete: R$ ${Number(order.freight || 0).toFixed(2)}`,
+    `*TOTAL: R$ ${Number(order.total || 0).toFixed(2)}*`
+  );
+
+  return lines.join('\n').trim();
+}
+
+function formatPixAppendix(order) {
+  const total = Number(order?.total || 0).toFixed(2);
+  const keyLine = PIX_KEY
+    ? `Chave PIX: *${PIX_KEY}*\nNome: ${PIX_NAME}`
+    : 'A chave PIX será enviada em seguida.';
+
+  return (
+    `\n\n---\n*Pagamento via PIX*\nValor: *R$ ${total}*\n${keyLine}\n\n` +
+    `Após pagar, pode mandar o comprovante aqui.`
+  );
+}
+
 /** Cliente acompanha o pedido abrindo a conversa com a loja */
-export function openTrackOrderWhatsApp(code) {
-  openWhatsApp(STORE_WHATSAPP, `PEDIDO ${code}`);
+export function openTrackOrderWhatsApp(orderOrCode) {
+  const text =
+    orderOrCode && typeof orderOrCode === 'object'
+      ? formatOrderWhatsAppText(orderOrCode) || `PEDIDO ${orderOrCode.code}`
+      : `PEDIDO ${orderOrCode}`;
+  openWhatsApp(STORE_WHATSAPP, text);
 }
 
 /** Cliente recebe a chave PIX (abre conversa com a loja já com o texto) */
-export function openPixWhatsApp(code, total) {
-  openWhatsApp(STORE_WHATSAPP, getPixWhatsAppMessage(code, total));
+export function openPixWhatsApp(orderOrCode, total) {
+  if (orderOrCode && typeof orderOrCode === 'object') {
+    openWhatsApp(
+      STORE_WHATSAPP,
+      formatOrderWhatsAppText(orderOrCode) + formatPixAppendix(orderOrCode)
+    );
+    return;
+  }
+  const code = orderOrCode;
+  const keyLine = PIX_KEY
+    ? `Chave PIX: *${PIX_KEY}*\nNome: ${PIX_NAME}\n`
+    : 'A chave PIX será enviada em seguida.\n';
+  openWhatsApp(
+    STORE_WHATSAPP,
+    `*Açaí do Wagão* — *PEDIDO ${code}*\n` +
+      `Pagamento via PIX\n` +
+      `Valor: *R$ ${Number(total).toFixed(2)}*\n\n` +
+      keyLine +
+      `\nApós pagar, pode mandar o comprovante aqui.`
+  );
 }
 
 /**

@@ -49,13 +49,16 @@ export default function OrderSuccessPage() {
         )}
 
         <Actions>
-          <PrimaryButton type="button" onClick={() => openTrackOrderWhatsApp(code)}>
+          <PrimaryButton
+            type="button"
+            onClick={() => openTrackOrderWhatsApp(order || code)}
+          >
             Acompanhar meu pedido
           </PrimaryButton>
           {isPix && (
             <SecondaryButton
               type="button"
-              onClick={() => openPixWhatsApp(code, order?.total || 0)}
+              onClick={() => openPixWhatsApp(order || code, order?.total || 0)}
             >
               Receber chave PIX no WhatsApp
             </SecondaryButton>
