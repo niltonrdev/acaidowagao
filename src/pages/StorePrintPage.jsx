@@ -80,10 +80,29 @@ function buildTicketHtml(order) {
     .totals p { margin: 3px 0; font-size: 13px; }
     .grand { font-size: 16px; margin-top: 6px; }
     .footer { text-align: center; margin-top: 14px; font-size: 12px; }
+    .print-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 10px;
+      background: #f0f0f0;
+      text-align: center;
+      border-bottom: 1px solid #ccc;
+      z-index: 10;
+    }
+    .print-bar button {
+      font-size: 16px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    body { padding-top: 56px; }
     @media print {
       @page { margin: 2mm; size: auto; }
-      html, body { width: auto; }
+      html, body { width: auto; padding-top: 0; }
       .ticket { width: 68mm; margin: 0; padding: 0; }
+      .print-bar { display: none !important; }
     }
   </style>
 </head>
@@ -121,9 +140,12 @@ function buildTicketHtml(order) {
     </div>
     <p class="footer">Obrigado pela preferência!</p>
   </div>
+  <div class="print-bar">
+    <button type="button" onclick="window.print()">Imprimir cupom</button>
+  </div>
   <script>
     window.onload = function () {
-      setTimeout(function () { window.print(); }, 300);
+      setTimeout(function () { window.print(); }, 500);
     };
   </script>
 </body>
@@ -140,7 +162,8 @@ function escapeHtml(value) {
 
 function openPrintWindow(order) {
   const html = buildTicketHtml(order);
-  const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=420,height=720');
+  // Sem noopener: alguns drivers térmicos falham ao imprimir janela isolada
+  const printWindow = window.open('', '_blank', 'width=420,height=720');
   if (!printWindow) {
     alert('Permita pop-ups para imprimir o pedido.');
     return;
@@ -148,6 +171,21 @@ function openPrintWindow(order) {
   printWindow.document.open();
   printWindow.document.write(html);
   printWindow.document.close();
+  printWindow.focus();
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, 1000);
 }
 
 export default function StorePrintPage() {
@@ -155,7 +193,9 @@ export default function StorePrintPage() {
   const [order, setOrder] = useState(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [savedImageUrl, setSavedImageUrl] = useState('');
   const ticketRef = useRef(null);
+  const savedImageUrlRef = useRef('');
   const loggedIn = isStoreLoggedIn();
 
   useEffect(() => {
@@ -180,11 +220,18 @@ export default function StorePrintPage() {
     };
   }, [id, loggedIn]);
 
+  useEffect(() => {
+    return () => {
+      if (savedImageUrlRef.current) {
+        URL.revokeObjectURL(savedImageUrlRef.current);
+      }
+    };
+  }, []);
+
   const handleSaveComprovante = async () => {
     if (!ticketRef.current || !order || saving) return;
     setSaving(true);
     try {
-      // ~576px ≈ 72mm em impressora térmica 203dpi (bom para bobina 80mm)
       const canvas = await html2canvas(ticketRef.current, {
         scale: 2,
         width: 288,
@@ -193,16 +240,44 @@ export default function StorePrintPage() {
         logging: false,
         useCORS: true,
       });
-      const link = document.createElement('a');
-      link.download = `pedido-${order.code}-acai-do-wagao.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((result) => {
+          if (result) resolve(result);
+          else reject(new Error('Falha ao gerar PNG'));
+        }, 'image/png');
+      });
+
+      const filename = `pedido-${order.code}-acai-do-wagao.png`;
+      downloadBlob(blob, filename);
+
+      if (savedImageUrlRef.current) {
+        URL.revokeObjectURL(savedImageUrlRef.current);
+      }
+      const previewUrl = URL.createObjectURL(blob);
+      savedImageUrlRef.current = previewUrl;
+      setSavedImageUrl(previewUrl);
     } catch (err) {
       console.error(err);
       alert('Não foi possível salvar o comprovante. Tente novamente.');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleOpenSavedImage = () => {
+    if (!savedImageUrl) return;
+    window.open(savedImageUrl, '_blank');
+  };
+
+  const handleRedownload = () => {
+    if (!savedImageUrl || !order) return;
+    fetch(savedImageUrl)
+      .then((res) => res.blob())
+      .then((blob) =>
+        downloadBlob(blob, `pedido-${order.code}-acai-do-wagao.png`)
+      )
+      .catch(() => alert('Não foi possível baixar novamente.'));
   };
 
   if (!loggedIn) {
@@ -233,10 +308,27 @@ export default function StorePrintPage() {
 
       <Tip>
         <strong>Impressora térmica (Perto):</strong> use <em>Imprimir</em> (abre
-        janela limpa). Se preferir o PNG: ao imprimir a imagem, escolha{' '}
+        janela limpa; se não abrir, permita pop-ups). Ao salvar PNG, a imagem
+        fica abaixo — se o download sumir, use <em>Baixar de novo</em> ou{' '}
+        <em>Abrir imagem</em>. Na impressora:{' '}
         <em>Tamanho real / Ajustar à largura</em> — evite &quot;Preencher a
         página&quot;.
       </Tip>
+
+      {savedImageUrl && (
+        <SavedPreview>
+          <p>Comprovante salvo — se o arquivo sumir da pasta Downloads:</p>
+          <PreviewImg src={savedImageUrl} alt={`Pedido ${order.code}`} />
+          <PreviewActions>
+            <button type="button" onClick={handleRedownload}>
+              Baixar de novo
+            </button>
+            <button type="button" onClick={handleOpenSavedImage}>
+              Abrir imagem
+            </button>
+          </PreviewActions>
+        </SavedPreview>
+      )}
 
       <Ticket ref={ticketRef}>
         <Header>
@@ -365,6 +457,45 @@ const Tip = styled.p`
   background: #f8f5fb;
   padding: 10px 12px;
   border-radius: 8px;
+`;
+
+const SavedPreview = styled.div`
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #eafaf1;
+  border: 1px solid #abebc6;
+  border-radius: 8px;
+
+  p {
+    margin: 0 0 10px;
+    font-size: 0.85rem;
+    color: #1e8449;
+  }
+`;
+
+const PreviewImg = styled.img`
+  display: block;
+  max-width: 100%;
+  border: 1px solid #ccc;
+  background: #fff;
+`;
+
+const PreviewActions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+
+  button {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background: #fff;
+  }
 `;
 
 const Ticket = styled.div`
